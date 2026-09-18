@@ -22,8 +22,27 @@ public static class DatabaseInitializer
         }
 
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        if (await userManager.FindByEmailAsync(email) is not null)
+        var existingUser = await userManager.FindByEmailAsync(email);
+        if (existingUser is not null)
         {
+            if (!await userManager.CheckPasswordAsync(existingUser, password))
+            {
+                var resetToken = await userManager.GeneratePasswordResetTokenAsync(existingUser);
+                var resetResult = await userManager.ResetPasswordAsync(existingUser, resetToken, password);
+                if (!resetResult.Succeeded)
+                {
+                    var logger = scope.ServiceProvider.GetRequiredService<ILogger<ApplicationDbContext>>();
+                    logger.LogError("Het beheerwachtwoord uit User Secrets kon niet worden toegepast: {Errors}",
+                        string.Join(", ", resetResult.Errors.Select(x => x.Description)));
+                    return;
+                }
+            }
+
+            if (await userManager.IsLockedOutAsync(existingUser))
+            {
+                await userManager.SetLockoutEndDateAsync(existingUser, null);
+            }
+            await userManager.ResetAccessFailedCountAsync(existingUser);
             return;
         }
 

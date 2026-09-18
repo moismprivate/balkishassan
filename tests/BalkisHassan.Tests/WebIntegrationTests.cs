@@ -49,6 +49,9 @@ public sealed class WebIntegrationTests : IClassFixture<WebApplicationFactory<We
     {
         using var client = _factory.CreateClient();
         var html = await client.GetStringAsync("/admin/login");
+        Assert.Contains("admin-login-main", html);
+        Assert.DoesNotContain("admin-topbar", html);
+        Assert.DoesNotContain("brand-mark", html);
         var match = Regex.Match(html, "name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"");
         Assert.True(match.Success);
 
