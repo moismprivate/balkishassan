@@ -1,3 +1,5 @@
 @model BalkisHassan.Domain.ContentItem
-<article class="content-card"><a class="card-image" href="/content/@Model.Slug">@if (!string.IsNullOrWhiteSpace(Model.MainImage)) { <img src="@Model.MainImage" alt="@Model.Title" width="640" height="420" loading="lazy" /> } else { <span aria-hidden="true">@Model.Title.FirstOrDefault()</span> }</a>
-<div class="card-copy"><small>@Model.Category.Name</small><h3><a href="/content/@Model.Slug">@Model.Title</a></h3>@if (!string.IsNullOrWhiteSpace(Model.Summary)) { <p>@Html.Raw(Model.Summary)</p> }<time datetime="@Model.PublishedAt?.ToString("O")">@Model.PublishedAt?.ToString("d MMMM yyyy")</time></div></article>
+@{ var hasImage = !string.IsNullOrWhiteSpace(Model.MainImage); }
+<article class="content-card @(hasImage ? "with-image" : "without-image")">
+@if (hasImage) { <a class="card-image" href="/content/@Model.Slug"><img src="@Model.MainImage" alt="@Model.Title" width="640" height="420" loading="lazy" /></a> }
+<div class="card-copy"><small>@Model.Category.Name</small><h3><a href="/content/@Model.Slug">@Model.Title</a></h3>@if (!string.IsNullOrWhiteSpace(Model.Summary)) { <p>@Html.Raw(Model.Summary)</p> }<time datetime="@Model.PublishedAt?.ToString("O")">@Model.PublishedAt?.ToString("d MMMM yyyy")</time>@if (!string.IsNullOrWhiteSpace(Model.AudioPath)) { <partial name="_AudioPlayer" model="Model" /> }</div></article>
