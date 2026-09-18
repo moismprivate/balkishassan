@@ -91,13 +91,26 @@ public sealed class WebIntegrationTests : IClassFixture<WebApplicationFactory<We
     }
 
     [Fact]
+    public async Task Homepage_ToontPortretEnOorspronkelijkeLevensverhaal()
+    {
+        using var client = _factory.CreateClient();
+        var html = await client.GetStringAsync("/");
+        Assert.Contains("class=\"brand-photo\"", html);
+        Assert.Contains("من هي بلقيس حميد حسن؟", html);
+        Assert.Contains("اقرأ السيرة كاملة", html);
+        Assert.Contains("/content/2009-09-13-11-47-08", html);
+    }
+
+    [Fact]
     public async Task AudioPagina_BiedtSpelerFallbackEnByteRangeStreaming()
     {
         using var client = _factory.CreateClient();
         var html = await client.GetStringAsync("/content/audio-4701-قيود-صارمة-على-المرأة");
         Assert.Contains("data-audio-player", html);
         Assert.Contains("type=\"audio/mpeg\"", html);
+        Assert.Contains("تشغيل الصوت", html);
         Assert.Contains("تنزيل ملف MP3", html);
+        Assert.DoesNotContain("autoplay", html, StringComparison.OrdinalIgnoreCase);
 
         using var request = new HttpRequestMessage(HttpMethod.Get, "/uploads/audio/2291005-df9bd8b5.mp3");
         request.Headers.Range = new RangeHeaderValue(0, 1023);
@@ -105,5 +118,15 @@ public sealed class WebIntegrationTests : IClassFixture<WebApplicationFactory<We
         Assert.Equal(HttpStatusCode.PartialContent, response.StatusCode);
         Assert.Equal("audio/mpeg", response.Content.Headers.ContentType?.MediaType);
         Assert.Equal(1024, response.Content.Headers.ContentLength);
+    }
+
+    [Fact]
+    public async Task YouTubePagina_ToontPrivacyvriendelijkeEmbedZonderAutoplay()
+    {
+        using var client = _factory.CreateClient();
+        var html = await client.GetStringAsync("/content/2019-08-15-09-31-22");
+        Assert.Contains("class=\"video-embed\"", html);
+        Assert.Contains("https://www.youtube-nocookie.com/embed/pvKosp0S4tc", html);
+        Assert.DoesNotContain("autoplay=1", html, StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -38,18 +38,20 @@ const formatAudioTime = value => {
 audioPlayers.forEach(player => {
   const audio = player.querySelector('audio');
   const toggle = player.querySelector('.audio-toggle');
-  const icon = toggle?.querySelector('span');
+  const icon = toggle?.querySelector('.audio-toggle-icon');
+  const label = toggle?.querySelector('.audio-toggle-label');
   const progress = player.querySelector('[data-audio-progress]');
   const current = player.querySelector('[data-audio-current]');
   const duration = player.querySelector('[data-audio-duration]');
   const message = player.querySelector('[data-audio-message]');
-  if (!audio || !toggle || !icon || !progress || !current || !duration || !message) return;
+  if (!audio || !toggle || !icon || !label || !progress || !current || !duration || !message) return;
 
   const showError = () => { message.hidden = false; };
   const hideError = () => { message.hidden = true; };
   const setPaused = paused => {
     icon.textContent = paused ? '▶' : 'Ⅱ';
-    toggle.setAttribute('aria-label', paused ? 'تشغيل التسجيل' : 'إيقاف التسجيل مؤقتاً');
+    label.textContent = paused ? 'تشغيل الصوت' : 'إيقاف مؤقت';
+    toggle.setAttribute('aria-label', paused ? 'تشغيل الصوت' : 'إيقاف الصوت مؤقتاً');
     player.classList.toggle('is-playing', !paused);
   };
 

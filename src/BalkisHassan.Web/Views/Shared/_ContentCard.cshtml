@@ -1,5 +1,6 @@
 @model BalkisHassan.Domain.ContentItem
-@{ var hasImage = !string.IsNullOrWhiteSpace(Model.MainImage); }
+@using BalkisHassan.Web.Utilities
+@{ var hasImage = !string.IsNullOrWhiteSpace(Model.MainImage); var youtubeId = YouTubeEmbed.FindVideoId(Model.Content); }
 <article class="content-card @(hasImage ? "with-image" : "without-image")">
 @if (hasImage) { <a class="card-image" href="/content/@Model.Slug"><img src="@Model.MainImage" alt="@Model.Title" width="640" height="420" loading="lazy" /></a> }
-<div class="card-copy"><small>@Model.Category.Name</small><h3><a href="/content/@Model.Slug">@Model.Title</a></h3>@if (!string.IsNullOrWhiteSpace(Model.Summary)) { <p>@Html.Raw(Model.Summary)</p> }<time datetime="@Model.PublishedAt?.ToString("O")">@Model.PublishedAt?.ToString("d MMMM yyyy")</time>@if (!string.IsNullOrWhiteSpace(Model.AudioPath)) { <partial name="_AudioPlayer" model="Model" /> }</div></article>
+<div class="card-copy"><small>@Model.Category.Name</small><h3><a href="/content/@Model.Slug">@Model.Title</a></h3>@if (youtubeId is not null) { <a class="card-video-link" href="/content/@Model.Slug"><span aria-hidden="true">▶</span><strong>مشاهدة الفيديو</strong></a> } else if (!string.IsNullOrWhiteSpace(Model.Summary)) { <p>@Html.Raw(Model.Summary)</p> }<time datetime="@Model.PublishedAt?.ToString("O")">@Model.PublishedAt?.ToString("d MMMM yyyy")</time>@if (!string.IsNullOrWhiteSpace(Model.AudioPath)) { <partial name="_AudioPlayer" model="Model" /> }</div></article>

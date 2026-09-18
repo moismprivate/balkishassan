@@ -22,11 +22,13 @@ public sealed class HomeController(ApplicationDbContext db) : Controller
             .OrderBy(x => x.SortOrder).ThenBy(x => x.Name).ToListAsync(cancellationToken);
         var hero = featured.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.MainImage))
                    ?? latest.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.MainImage)) ?? latest.FirstOrDefault();
+        var biography = await db.ContentItems.AsNoTracking().Include(x => x.Category)
+            .SingleOrDefaultAsync(x => x.LegacyJoomlaId == 6 && x.IsPublished, cancellationToken);
         var portraitPath = await db.MediaItems.AsNoTracking()
             .Where(x => x.LegacyPath != null && x.LegacyPath.ToLower() == "images/stories/balkis.jpg")
             .Select(x => x.Path)
             .FirstOrDefaultAsync(cancellationToken);
-        return View(new HomeViewModel(featured, latest, categories, hero, portraitPath));
+        return View(new HomeViewModel(featured, latest, categories, hero, biography, portraitPath));
     }
 
     [HttpGet("search")]
