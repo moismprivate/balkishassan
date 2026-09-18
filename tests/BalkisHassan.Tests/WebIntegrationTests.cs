@@ -129,4 +129,43 @@ public sealed class WebIntegrationTests : IClassFixture<WebApplicationFactory<We
         Assert.Contains("https://www.youtube-nocookie.com/embed/pvKosp0S4tc", html);
         Assert.DoesNotContain("autoplay=1", html, StringComparison.OrdinalIgnoreCase);
     }
+
+    [Fact]
+    public async Task OudeFlashVideos_ZijnHersteldAlsModerneYouTubeEmbeds()
+    {
+        using var client = _factory.CreateClient();
+        var html = await client.GetStringAsync("/content/2011-02-13-17-00-04");
+        Assert.Contains("https://www.youtube-nocookie.com/embed/HdjgYpC0OOA", html);
+        Assert.DoesNotContain("shockwave-flash", html, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("autoplay=1", html, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Boekpagina_BiedtPdfEnBiografieVergrootPortretNiet()
+    {
+        using var client = _factory.CreateClient();
+        var book = await client.GetStringAsync("/content/2009-09-13-10-56-06");
+        Assert.Contains("href=\"/uploads/documents/aghtirab-altair.pdf\"", book);
+        Assert.Contains("تنزيل الكتاب بصيغة PDF", book);
+        using var pdf = await client.GetAsync("/uploads/documents/aghtirab-altair.pdf");
+        Assert.Equal(HttpStatusCode.OK, pdf.StatusCode);
+        Assert.Equal("application/pdf", pdf.Content.Headers.ContentType?.MediaType);
+
+        var biography = await client.GetStringAsync("/content/2009-09-13-11-47-08");
+        Assert.Contains("article-page biography-page", biography);
+        Assert.Contains("width=\"138\" height=\"166\"", biography);
+    }
+
+    [Fact]
+    public async Task JoomlaUrlMetContentPrefix_RedirectNaarNieuweBoekpagina()
+    {
+        using var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        var response = await client.GetAsync("/content/index.php?option=com_content&view=article&id=1");
+        Assert.Equal(HttpStatusCode.MovedPermanently, response.StatusCode);
+        Assert.Equal("/content/2009-09-13-10-56-06", response.Headers.Location?.OriginalString);
+
+        var originalUrl = await client.GetAsync("/index.php?option=com_content&view=article&id=1&Itemid=2");
+        Assert.Equal(HttpStatusCode.MovedPermanently, originalUrl.StatusCode);
+        Assert.Equal("/content/2009-09-13-10-56-06", originalUrl.Headers.Location?.OriginalString);
+    }
 }

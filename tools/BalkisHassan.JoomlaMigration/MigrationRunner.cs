@@ -148,6 +148,7 @@ public sealed class MigrationRunner(string connectionString, string sqlPath, str
             var intro = RewriteMedia(source.Text("introtext"));
             var full = RewriteMedia(source.Text("fulltext"));
             var combined = string.IsNullOrWhiteSpace(full) ? intro : $"{intro}\n{full}";
+            combined = RewriteLegacyYouTubeObjects(combined);
             item.Content = _sanitizer.Sanitize(combined);
             item.Summary = Limit(PlainText(intro), 800);
             item.CategoryId = category.Id;
@@ -357,6 +358,19 @@ public sealed class MigrationRunner(string connectionString, string sqlPath, str
             var replacement = ResolveMediaPath(WebUtility.HtmlDecode(match.Groups["path"].Value));
             return replacement is null ? match.Value : match.Groups["prefix"].Value + replacement + match.Groups["suffix"].Value;
         }, RegexOptions.IgnoreCase);
+    }
+
+    private static string RewriteLegacyYouTubeObjects(string html)
+    {
+        if (string.IsNullOrWhiteSpace(html)) return string.Empty;
+        return Regex.Replace(html, @"<object\b.*?</object>", match =>
+        {
+            var video = Regex.Match(WebUtility.HtmlDecode(match.Value),
+                @"youtube(?:-nocookie)?\.com/v/([A-Za-z0-9_-]{11})", RegexOptions.IgnoreCase);
+            return video.Success
+                ? $"<p><a href=\"https://www.youtube.com/watch?v={video.Groups[1].Value}\">مشاهدة الفيديو</a></p>"
+                : string.Empty;
+        }, RegexOptions.IgnoreCase | RegexOptions.Singleline);
     }
 
     private string? ResolveMediaPath(string raw)

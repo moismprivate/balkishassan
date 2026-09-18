@@ -14,17 +14,12 @@ public sealed class LegacyRedirectMiddleware(RequestDelegate next)
 
     public async Task InvokeAsync(HttpContext context, ApplicationDbContext db)
     {
-        if (context.Request.Path.Equals("/index.php", StringComparison.OrdinalIgnoreCase))
+        if (context.Request.Path.Equals("/index.php", StringComparison.OrdinalIgnoreCase) ||
+            context.Request.Path.Equals("/content/index.php", StringComparison.OrdinalIgnoreCase))
         {
-            var itemId = context.Request.Query["Itemid"].ToString();
-            if (MenuRedirects.TryGetValue(itemId, out var menuDestination))
-            {
-                context.Response.Redirect(EncodeLocation(menuDestination), true);
-                return;
-            }
-
             var idText = context.Request.Query["id"].ToString().Split(':')[0];
-            if (int.TryParse(idText, out var legacyId))
+            var isArticle = context.Request.Query["view"].ToString().Equals("article", StringComparison.OrdinalIgnoreCase);
+            if (isArticle && int.TryParse(idText, out var legacyId))
             {
                 var slug = await db.ContentItems.AsNoTracking().Where(x => x.LegacyJoomlaId == legacyId)
                     .Select(x => x.Slug).SingleOrDefaultAsync(context.RequestAborted);
@@ -33,6 +28,13 @@ public sealed class LegacyRedirectMiddleware(RequestDelegate next)
                     context.Response.Redirect($"/content/{Uri.EscapeDataString(slug)}", true);
                     return;
                 }
+            }
+
+            var itemId = context.Request.Query["Itemid"].ToString();
+            if (MenuRedirects.TryGetValue(itemId, out var menuDestination))
+            {
+                context.Response.Redirect(EncodeLocation(menuDestination), true);
+                return;
             }
         }
 
