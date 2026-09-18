@@ -1,0 +1,2 @@
+@model BalkisHassan.Domain.ContentItem
+<article class="content-row"><time datetime="@Model.PublishedAt?.ToString("O")"><b>@Model.PublishedAt?.Day</b><span>@Model.PublishedAt?.ToString("MMMM yyyy")</span></time><div><small>@Model.Category.Name</small><h3><a href="/content/@Model.Slug">@Model.Title</a></h3></div><a class="row-arrow" href="/content/@Model.Slug" aria-label="اقرأ @Model.Title">←</a></article>

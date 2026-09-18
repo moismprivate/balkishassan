@@ -1,0 +1,15 @@
+* text=auto
+
+# Linux deploymentbestanden moeten LF en een geldige shebang behouden.
+*.sh text eol=lf
+*.service text eol=lf
+Caddyfile text eol=lf
+
+# Binaire gemigreerde media nooit als tekst behandelen.
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.gif binary
+*.ico binary
+*.mp3 binary
+*.pdf binary

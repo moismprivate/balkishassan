@@ -1,0 +1,5 @@
+@model BalkisHassan.Web.Models.CategoryViewModel
+@{ ViewData["Title"] = $"{Model.Category.Name} — بلقيس حميد حسن"; ViewData["Description"] = Model.Category.Description; }
+<header class="page-header shell"><nav class="breadcrumbs"><a href="/">الرئيسية</a><span>/</span><span>@Model.Category.Name</span></nav><span class="eyebrow">الأرشيف</span><h1>@Model.Category.Name</h1>@if (!string.IsNullOrWhiteSpace(Model.Category.Description)) { <p>@Model.Category.Description</p> }</header>
+<section class="shell section"><div class="archive-grid">@if (Model.Items.Count == 0) { <p class="empty-state">لا توجد منشورات في هذا القسم بعد.</p> } @foreach (var item in Model.Items) { <partial name="_ContentCard" model="item" /> }</div>
+@if (Model.TotalPages > 1) { <nav class="pagination" aria-label="صفحات"><a class="@(Model.Page <= 1 ? "disabled" : "")" href="?page=@(Model.Page - 1)">السابق</a><span>@Model.Page / @Model.TotalPages</span><a class="@(Model.Page >= Model.TotalPages ? "disabled" : "")" href="?page=@(Model.Page + 1)">التالي</a></nav> }</section>

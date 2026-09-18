@@ -1,0 +1,29 @@
+# Build- en testresultaten
+**/bin/
+**/obj/
+TestResults/
+artifacts/
+.vs/
+.vscode/
+*.user
+*.suo
+
+# Lokale configuratie en geheimen
+login.txt
+secrets.json
+appsettings.*.local.json
+.env
+.env.*
+!.env.example
+deploy/*.env
+deploy/*.env.*
+!deploy/balkishassan.env.example
+
+# Lokale database- en back-upbestanden
+*.dump
+*.bak
+backups/
+
+# Systeembestanden
+.DS_Store
+Thumbs.db
