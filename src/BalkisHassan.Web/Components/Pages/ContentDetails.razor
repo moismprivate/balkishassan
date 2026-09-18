@@ -9,8 +9,8 @@
 else
 {
 <SeoHead Title="@(DisplayTitle + " — بلقيس حميد حسن")" Description="@SeoText.Description(Item.Summary ?? Item.Content, DisplayTitle)" CanonicalPath="@($"/content/{Item.Slug}")" Image="@Item.MainImage" OpenGraphType="article" />
-<article class="article-page @(IsBiography ? "biography-page" : "") @(IsBook ? "book-page" : "") @(Item.Type is ContentType.Poem or ContentType.AudioPoem ? "poem-page" : "")"><header class="article-header shell"><nav class="breadcrumbs"><a href="/">الرئيسية</a><span>/</span>@if (Item.Category.IsVisible) { <a href="@CategoryUrl">@Item.Category.Name</a> } else { <span>@SectionTitle</span> }</nav><small>@SectionTitle</small><h1>@DisplayTitle</h1>@if (ShowSummary) { <p class="lead">@((MarkupString)(Item.Summary ?? string.Empty))</p> }<time datetime="@Item.PublishedAt?.ToString("O")">@Item.PublishedAt?.ToString("d MMMM yyyy")</time></header>
-@if (!string.IsNullOrWhiteSpace(Item.MainImage)) { <figure class="article-image shell"><img src="@Item.MainImage" alt="@DisplayTitle" width="138" height="166" /></figure> }
+<article class="article-page @(IsBiography ? "biography-page" : "") @(IsBook ? "book-page" : "") @(IsBookOverview ? "book-overview-page" : "") @(Item.Type is ContentType.Poem or ContentType.AudioPoem ? "poem-page" : "")"><header class="article-header shell"><nav class="breadcrumbs"><a href="/">الرئيسية</a><span>/</span>@if (Item.Category.IsVisible) { <a href="@CategoryUrl">@Item.Category.Name</a> } else { <span>@SectionTitle</span> }</nav><small>@SectionTitle</small><h1>@DisplayTitle</h1>@if (ShowSummary) { <p class="lead">@((MarkupString)(Item.Summary ?? string.Empty))</p> }@if (ShowPublishedDate) { <time datetime="@Item.PublishedAt?.ToString("O")">@Item.PublishedAt?.ToString("d MMMM yyyy")</time> }</header>
+@if (ShowMainImage) { <figure class="article-image shell"><img src="@Item.MainImage" alt="@DisplayTitle" width="138" height="166" /></figure> }
 <div class="article-body shell">@((MarkupString)ArticleContent) @if (YoutubeId is not null) { <div class="video-heading"><span aria-hidden="true">▶</span><strong>مشاهدة الفيديو</strong></div><div class="video-embed"><iframe src="https://www.youtube-nocookie.com/embed/@YoutubeId" title="@DisplayTitle" loading="lazy" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div> } @if (!string.IsNullOrWhiteSpace(Item.AudioPath)) { <AudioPlayer Item="Item" /> }</div></article>
 }
 @code {
@@ -18,6 +18,9 @@ else
     private ContentItem? Item;
     private bool IsBiography => Item?.LegacyJoomlaId == 6;
     private bool IsBook => Item?.LegacyJoomlaId == 1 || Item?.Type == ContentType.Book || Item?.Category.LegacyJoomlaId == 6 || !string.IsNullOrWhiteSpace(Item?.DocumentPath);
+    private bool IsBookOverview => Item?.Slug == "أعمال-الشاعرة";
+    private bool ShowPublishedDate => !IsBookOverview && Item?.PublishedAt is not null;
+    private bool ShowMainImage => !IsBookOverview && !string.IsNullOrWhiteSpace(Item?.MainImage) && !ArticleContent.Contains(Item.MainImage, StringComparison.OrdinalIgnoreCase);
     private string DisplayTitle => IsBiography ? "السيرة الذاتية" : Item?.Title ?? string.Empty;
     private string SectionTitle => IsBiography ? "محطات من السيرة الذاتية" : Item?.Category.Name ?? string.Empty;
     private string? YoutubeId;

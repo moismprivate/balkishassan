@@ -51,12 +51,12 @@
 }
 
 .hero-visual img {
-  width: 138px;
-  height: 166px;
+  width: 180px;
+  height: 216px;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  border-radius: 70px 70px 14px 14px;
+  border-radius: 90px 90px 16px 16px;
   box-shadow: 0 18px 45px rgba(52, 37, 29, .22);
 }
 
@@ -86,6 +86,8 @@
   height: auto;
   object-fit: contain;
 }
+.book-overview-page .article-header { padding-bottom: 8px; }
+.book-overview-page .article-body { padding-top: 24px; }
 
 .video-embed {
   position: relative;
@@ -171,8 +173,8 @@
   }
   .hero-visual { min-height: 320px; }
   .hero-visual img {
-    width: 112px;
-    height: 142px;
+    width: 136px;
+    height: 172px;
     top: 50%;
   }
   .biography-grid {

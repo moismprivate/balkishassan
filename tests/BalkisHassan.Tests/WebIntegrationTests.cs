@@ -42,6 +42,18 @@ public sealed class WebIntegrationTests : IClassFixture<WebApplicationFactory<We
         Assert.Contains("بلقيس حميد حسن", html);
         Assert.DoesNotContain("????", html);
         Assert.Contains("dir=\"rtl\"", html);
+        Assert.Contains("href=\"#latest-publications\"", html);
+        Assert.Contains("id=\"latest-publications\"", html);
+    }
+
+    [Fact]
+    public async Task Boekenoverzicht_ToontGeenMigratiedatumOfDubbeleHoofdafbeelding()
+    {
+        using var client = _factory.CreateClient();
+        var html = await client.GetStringAsync("/content/%D8%A3%D8%B9%D9%85%D8%A7%D9%84-%D8%A7%D9%84%D8%B4%D8%A7%D8%B9%D8%B1%D8%A9");
+        Assert.Contains("book-overview-page", html);
+        Assert.DoesNotContain("<figure class=\"article-image shell\">", html);
+        Assert.DoesNotContain("<time datetime=", html);
     }
 
     [Fact]
