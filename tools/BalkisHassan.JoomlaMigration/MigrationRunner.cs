@@ -53,7 +53,8 @@ public sealed class MigrationRunner(string connectionString, string sqlPath, str
         contentCount += await MigrateAudioModuleAsync(db, data, categoryMap, cancellationToken);
         var linkCount = await MigrateLinksAsync(db, data, cancellationToken);
         var contactCount = await MigrateContactsAsync(db, data, cancellationToken);
-        var redirectCount = await MigrateRedirectsAsync(db, data, categoryMap, cancellationToken);
+        await MigrateRedirectsAsync(db, data, categoryMap, cancellationToken);
+        var redirectCount = await db.LegacyRedirects.CountAsync(cancellationToken);
 
         var migratedText = string.Join('\n', await db.ContentItems.AsNoTracking().Select(x => x.Title + "\n" + x.Content).ToListAsync(cancellationToken));
         var questionRuns = Regex.Matches(migratedText, "\\?{4,}").Count;
@@ -120,6 +121,8 @@ public sealed class MigrationRunner(string connectionString, string sqlPath, str
         var existing = (await db.ContentItems.Where(x => x.LegacyJoomlaId != null && x.LegacyJoomlaId > 0).ToListAsync(cancellationToken))
             .ToDictionary(x => x.LegacyJoomlaId!.Value);
         var usedSlugs = (await db.ContentItems.Select(x => x.Slug).ToListAsync(cancellationToken)).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var existingRedirects = (await db.LegacyRedirects.Where(x => x.Source.StartsWith("/content/"))
+            .ToListAsync(cancellationToken)).ToDictionary(x => x.Source, StringComparer.OrdinalIgnoreCase);
         var featuredIds = data["jos_content_frontpage"].Select(x => x.Int("content_id")).ToHashSet();
         var migrated = 0;
 
@@ -141,10 +144,23 @@ public sealed class MigrationRunner(string connectionString, string sqlPath, str
             }
 
             item.Title = FirstNonEmpty(source.Text("title"), $"Joomla {legacyId}").Trim();
-            var wantedSlug = SlugGenerator.Generate(FirstNonEmpty(source.Text("alias"), item.Title), legacyId);
+            var previousSlug = item.Slug;
+            var wantedSlug = SlugGenerator.Generate(item.Title, legacyId);
             if (item.Slug != wantedSlug && usedSlugs.Contains(wantedSlug)) wantedSlug += $"-{legacyId}";
             usedSlugs.Add(wantedSlug);
             item.Slug = wantedSlug;
+            if (!string.IsNullOrWhiteSpace(previousSlug) && !previousSlug.Equals(wantedSlug, StringComparison.OrdinalIgnoreCase))
+            {
+                var sourcePath = $"/content/{previousSlug}";
+                if (!existingRedirects.TryGetValue(sourcePath, out var slugRedirect))
+                {
+                    slugRedirect = new LegacyRedirect { Source = sourcePath };
+                    db.LegacyRedirects.Add(slugRedirect);
+                    existingRedirects[sourcePath] = slugRedirect;
+                }
+                slugRedirect.Destination = $"/content/{wantedSlug}";
+                slugRedirect.IsPermanent = true;
+            }
             var intro = RewriteMedia(source.Text("introtext"));
             var full = RewriteMedia(source.Text("fulltext"));
             var combined = string.IsNullOrWhiteSpace(full) ? intro : $"{intro}\n{full}";

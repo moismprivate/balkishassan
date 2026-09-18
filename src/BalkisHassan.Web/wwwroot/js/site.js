@@ -1,33 +1,19 @@
-document.querySelector('.menu-toggle')?.addEventListener('click', event => {
-  const button = event.currentTarget;
-  const menu = document.getElementById('main-menu');
-  const open = menu?.classList.toggle('open') ?? false;
-  button.setAttribute('aria-expanded', String(open));
+document.addEventListener('click', async event => {
+  const menuButton = event.target.closest('.menu-toggle');
+  if (menuButton) {
+    const menu = document.getElementById('main-menu');
+    const open = menu?.classList.toggle('open') ?? false;
+    menuButton.setAttribute('aria-expanded', String(open));
+    return;
+  }
+
+  const mediaPath = event.target.closest('.media-grid input[readonly]');
+  if (mediaPath) {
+    mediaPath.select();
+    await navigator.clipboard?.writeText(mediaPath.value);
+  }
 });
 
-const editor = document.querySelector('.rich-editor');
-if (editor) {
-  const source = document.getElementById(editor.dataset.source);
-  document.querySelectorAll('.editor-toolbar [data-command]').forEach(button => {
-    button.addEventListener('click', () => {
-      const command = button.dataset.command;
-      let value = button.dataset.value ?? null;
-      if (command === 'createLink') value = window.prompt('أدخلي عنوان الرابط كاملاً');
-      if (command !== 'createLink' || value) document.execCommand(command, false, value);
-      editor.focus();
-    });
-  });
-  editor.closest('form')?.addEventListener('submit', () => { source.value = editor.innerHTML; });
-}
-
-document.querySelectorAll('.media-grid input[readonly]').forEach(input => {
-  input.addEventListener('click', async () => {
-    input.select();
-    await navigator.clipboard?.writeText(input.value);
-  });
-});
-
-const audioPlayers = [...document.querySelectorAll('[data-audio-player]')];
 const formatAudioTime = value => {
   if (!Number.isFinite(value)) return '--:--';
   const minutes = Math.floor(value / 60);
@@ -35,7 +21,8 @@ const formatAudioTime = value => {
   return `${minutes}:${seconds}`;
 };
 
-audioPlayers.forEach(player => {
+const initializeAudioPlayers = () => document.querySelectorAll('[data-audio-player]:not([data-initialized])').forEach(player => {
+  player.dataset.initialized = 'true';
   const audio = player.querySelector('audio');
   const toggle = player.querySelector('.audio-toggle');
   const icon = toggle?.querySelector('.audio-toggle-icon');
@@ -76,7 +63,7 @@ audioPlayers.forEach(player => {
       audio.pause();
       return;
     }
-    audioPlayers.forEach(other => {
+    document.querySelectorAll('[data-audio-player]').forEach(other => {
       if (other !== player) other.querySelector('audio')?.pause();
     });
     try {
@@ -93,3 +80,7 @@ audioPlayers.forEach(player => {
     }
   });
 });
+
+initializeAudioPlayers();
+document.addEventListener('DOMContentLoaded', initializeAudioPlayers);
+window.Blazor?.addEventListener('enhancedload', initializeAudioPlayers);

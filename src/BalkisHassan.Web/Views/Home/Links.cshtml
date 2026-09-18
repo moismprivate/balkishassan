@@ -1,4 +1,0 @@
-@model IReadOnlyList<BalkisHassan.Domain.ExternalLink>
-@{ ViewData["Title"] = "مواقع — بلقيس حميد حسن"; }
-<header class="page-header shell"><nav class="breadcrumbs"><a href="/">الرئيسية</a><span>/</span><span>مواقع</span></nav><span class="eyebrow">روابط مختارة</span><h1>مواقع</h1></header>
-<section class="section shell"><div class="links-list">@foreach (var link in Model) { <a href="@link.Url" rel="noopener noreferrer" target="_blank"><div><h2>@link.Title</h2>@if (!string.IsNullOrWhiteSpace(link.Description)) { <p>@link.Description</p> }</div><span>↗</span></a> }</div></section>

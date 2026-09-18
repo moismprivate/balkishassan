@@ -15,10 +15,17 @@ public sealed class MediaStorageService(IWebHostEnvironment environment)
 
     public async Task<MediaItem> SaveAsync(IFormFile file, string? altText, CancellationToken cancellationToken)
     {
-        if (file.Length is <= 0 or > MaximumSize)
+        await using var input = file.OpenReadStream();
+        return await SaveAsync(input, file.FileName, file.Length, altText, cancellationToken);
+    }
+
+    public async Task<MediaItem> SaveAsync(Stream input, string originalFileName, long length, string? altText,
+        CancellationToken cancellationToken)
+    {
+        if (length is <= 0 or > MaximumSize)
             throw new InvalidOperationException("حجم الملف غير مسموح به. الحد الأقصى 25 ميغابايت.");
 
-        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        var extension = Path.GetExtension(originalFileName).ToLowerInvariant();
         if (!AllowedTypes.TryGetValue(extension, out var mimeType))
             throw new InvalidOperationException("نوع الملف غير مسموح به.");
 
@@ -31,12 +38,12 @@ public sealed class MediaStorageService(IWebHostEnvironment environment)
         var fullPath = Path.Combine(directory, safeName);
 
         await using var stream = new FileStream(fullPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, true);
-        await file.CopyToAsync(stream, cancellationToken);
+        await input.CopyToAsync(stream, cancellationToken);
 
         return new MediaItem
         {
-            FileName = safeName, OriginalFileName = Path.GetFileName(file.FileName), Path = relativePath,
-            MimeType = mimeType, Size = file.Length, AltText = string.IsNullOrWhiteSpace(altText) ? null : altText.Trim()
+            FileName = safeName, OriginalFileName = Path.GetFileName(originalFileName), Path = relativePath,
+            MimeType = mimeType, Size = length, AltText = string.IsNullOrWhiteSpace(altText) ? null : altText.Trim()
         };
     }
 }

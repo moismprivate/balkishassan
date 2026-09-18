@@ -1,0 +1,42 @@
+@page "/content/{Slug}"
+@inject ApplicationDbContext Db
+@inject IHttpContextAccessor HttpContextAccessor
+@if (Item is null)
+{
+    <SeoHead Title="الصفحة غير موجودة — بلقيس حميد حسن" Description="تعذر العثور على هذا النص." CanonicalPath="@($"/content/{Slug}")" />
+    <section class="status-page shell"><span>404</span><h1>الصفحة غير موجودة</h1><a href="/">العودة إلى الرئيسية</a></section>
+}
+else
+{
+<SeoHead Title="@(DisplayTitle + " — بلقيس حميد حسن")" Description="@SeoText.Description(Item.Summary ?? Item.Content, DisplayTitle)" CanonicalPath="@($"/content/{Item.Slug}")" Image="@Item.MainImage" OpenGraphType="article" />
+<article class="article-page @(IsBiography ? "biography-page" : "") @(IsBook ? "book-page" : "") @(Item.Type is ContentType.Poem or ContentType.AudioPoem ? "poem-page" : "")"><header class="article-header shell"><nav class="breadcrumbs"><a href="/">الرئيسية</a><span>/</span>@if (Item.Category.IsVisible) { <a href="@CategoryUrl">@Item.Category.Name</a> } else { <span>@SectionTitle</span> }</nav><small>@SectionTitle</small><h1>@DisplayTitle</h1>@if (ShowSummary) { <p class="lead">@((MarkupString)(Item.Summary ?? string.Empty))</p> }<time datetime="@Item.PublishedAt?.ToString("O")">@Item.PublishedAt?.ToString("d MMMM yyyy")</time></header>
+@if (!string.IsNullOrWhiteSpace(Item.MainImage)) { <figure class="article-image shell"><img src="@Item.MainImage" alt="@DisplayTitle" width="138" height="166" /></figure> }
+<div class="article-body shell">@((MarkupString)ArticleContent) @if (YoutubeId is not null) { <div class="video-heading"><span aria-hidden="true">▶</span><strong>مشاهدة الفيديو</strong></div><div class="video-embed"><iframe src="https://www.youtube-nocookie.com/embed/@YoutubeId" title="@DisplayTitle" loading="lazy" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div> } @if (!string.IsNullOrWhiteSpace(Item.AudioPath)) { <AudioPlayer Item="Item" /> }</div></article>
+}
+@code {
+    [Parameter] public string Slug { get; set; } = string.Empty;
+    private ContentItem? Item;
+    private bool IsBiography => Item?.LegacyJoomlaId == 6;
+    private bool IsBook => Item?.LegacyJoomlaId == 1 || Item?.Type == ContentType.Book || Item?.Category.LegacyJoomlaId == 6 || !string.IsNullOrWhiteSpace(Item?.DocumentPath);
+    private string DisplayTitle => IsBiography ? "السيرة الذاتية" : Item?.Title ?? string.Empty;
+    private string SectionTitle => IsBiography ? "محطات من السيرة الذاتية" : Item?.Category.Name ?? string.Empty;
+    private string? YoutubeId;
+    private string ArticleContent = string.Empty;
+    private bool ShowSummary;
+    private string CategoryUrl => Item?.Category.LegacyJoomlaId == 6 ? "/content/أعمال-الشاعرة" : $"/category/{Item?.Category.Slug}";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Item = await Db.ContentItems.AsNoTracking().Include(x => x.Category).SingleOrDefaultAsync(x => x.Slug == Slug && x.IsPublished && (x.PublishedAt == null || x.PublishedAt <= DateTimeOffset.UtcNow));
+        if (Item is null) { if (HttpContextAccessor.HttpContext is { } context) context.Response.StatusCode = 404; return; }
+        YoutubeId = YouTubeEmbed.FindVideoId(Item.Content);
+        ArticleContent = YoutubeId is null ? Item.Content : YouTubeEmbed.RemoveVideoLinks(Item.Content);
+        if (IsBiography)
+        {
+            var biographyText = ArticleContent.IndexOf("ولدت بلقيس", StringComparison.Ordinal);
+            var paragraph = biographyText < 0 ? -1 : ArticleContent.LastIndexOf("<p", biographyText, StringComparison.OrdinalIgnoreCase);
+            if (paragraph >= 0) ArticleContent = ArticleContent[paragraph..];
+        }
+        ShowSummary = !IsBiography && !IsBook && !string.IsNullOrWhiteSpace(Item.Summary) && YouTubeEmbed.FindVideoId(Item.Summary) is null;
+    }
+}

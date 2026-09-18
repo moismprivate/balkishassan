@@ -74,6 +74,19 @@
   object-position: center 24%;
 }
 
+.book-page .article-image {
+  width: min(280px, calc(100% - 40px));
+  height: auto;
+  aspect-ratio: auto;
+  margin-inline: auto;
+  background: transparent;
+}
+.book-page .article-image img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
 .video-embed {
   position: relative;
   width: 100%;

@@ -1,6 +1,6 @@
 # Balkis Hassan
 
-Volledige .NET 10-vervanging van de oude Joomla 1.5-website van de Iraakse dichteres en schrijfster بلقيس حميد حسن. De publieke website en het beheer zijn Arabisch en RTL. De implementatie gebruikt ASP.NET Core MVC, Entity Framework Core, PostgreSQL en ASP.NET Core Identity. Er is bewust geen Docker-configuratie.
+Volledige .NET 10-vervanging van de oude Joomla 1.5-website van de Iraakse dichteres en schrijfster بلقيس حميد حسن. De publieke website en het beheer zijn Arabisch en RTL. De implementatie gebruikt een .NET 10 Blazor Web App, Entity Framework Core, PostgreSQL en ASP.NET Core Identity. De publieke pagina's gebruiken Static SSR; uitsluitend `/admin` gebruikt Interactive Server. Er is bewust geen Docker-configuratie.
 
 ## Huidige migratiestatus
 
@@ -14,7 +14,7 @@ De reproduceerbare importer heeft de lokale Joomla SQL-dump en documentroot verw
 | Externe links | 15 |
 | Contactrecords | 1 |
 | Mediabestanden | 63 |
-| Permanente legacy-redirects | 522 |
+| Permanente legacy-redirects | 1034 |
 
 De drie lokale MP3-bestanden, boek-PDF's, relevante afbeeldingen en covers zijn gekopieerd naar `wwwroot/uploads`. De automatische encodingcontrole vond geen reeksen `????` en geen Unicode replacement characters in de gemigreerde inhoud. Zie [migration-analysis.md](migration-analysis.md) en [migration-report.md](migration-report.md) voor de bronanalyse en het laatste resultaat.
 

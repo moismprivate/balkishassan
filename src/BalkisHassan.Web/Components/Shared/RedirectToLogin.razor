@@ -1,0 +1,9 @@
+@inject NavigationManager Navigation
+<p>جارٍ التحويل إلى تسجيل الدخول…</p>
+@code {
+    protected override void OnInitialized()
+    {
+        var relative = "/" + Navigation.ToBaseRelativePath(Navigation.Uri);
+        Navigation.NavigateTo($"/admin/login?returnUrl={Uri.EscapeDataString(relative)}", true);
+    }
+}

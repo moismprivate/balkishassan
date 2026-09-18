@@ -1,0 +1,13 @@
+@page "/admin/login"
+@layout AdminLayout
+@attribute [AllowAnonymous]
+@rendermode InteractiveServer
+<PageTitle>تسجيل الدخول — إدارة الموقع</PageTitle>
+<HeadContent><meta name="robots" content="noindex,nofollow" /></HeadContent>
+<section class="login-panel"><span class="brand-mark">ب</span><h1>تسجيل الدخول</h1><p>إدارة محتويات موقع بلقيس حميد حسن</p>
+<form method="post" action="/admin/login/submit"><AntiforgeryToken /><input type="hidden" name="returnUrl" value="@ReturnUrl" />
+@if (Error == 1) { <div class="validation">البريد الإلكتروني أو كلمة المرور غير صحيحة.</div> }
+<label for="email">البريد الإلكتروني</label><input id="email" name="email" type="email" dir="ltr" autocomplete="username" required />
+<label for="password">كلمة المرور</label><input id="password" name="password" type="password" dir="ltr" autocomplete="current-password" required />
+<label class="check"><input name="rememberMe" type="checkbox" value="true" /> تذكرني</label><button class="primary-button" type="submit">دخول</button></form></section>
+@code { [SupplyParameterFromQuery] public int Error { get; set; } [SupplyParameterFromQuery] public string? ReturnUrl { get; set; } }

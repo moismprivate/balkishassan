@@ -1,4 +1,0 @@
-@model BalkisHassan.Web.Models.SearchViewModel
-@{ ViewData["Title"] = "البحث — بلقيس حميد حسن"; }
-<header class="page-header shell"><span class="eyebrow">الأرشيف</span><h1>البحث</h1><form class="page-search" action="/search" method="get"><label for="search-q">ابحث في العناوين والنصوص</label><div><input id="search-q" name="q" value="@Model.Query" type="search" /><button>بحث</button></div></form></header>
-<section class="section shell"><div class="latest-list light-list">@if (!string.IsNullOrWhiteSpace(Model.Query) && Model.Results.Count == 0) { <p class="empty-state">لم نعثر على نتائج لعبارة «@Model.Query».</p> } @foreach (var item in Model.Results) { <partial name="_ContentRow" model="item" /> }</div></section>

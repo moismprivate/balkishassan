@@ -1,0 +1,21 @@
+@inject NavigationManager Navigation
+<PageTitle>@Title</PageTitle>
+<HeadContent>
+    <meta name="description" content="@Description" />
+    <link rel="canonical" href="@CanonicalUrl" />
+    <meta property="og:title" content="@Title" />
+    <meta property="og:description" content="@Description" />
+    <meta property="og:type" content="@OpenGraphType" />
+    <meta property="og:url" content="@CanonicalUrl" />
+    <meta property="og:locale" content="ar_IQ" />
+    @if (!string.IsNullOrWhiteSpace(AbsoluteImage)) { <meta property="og:image" content="@AbsoluteImage" /> }
+</HeadContent>
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string Description { get; set; } = string.Empty;
+    [Parameter] public string? CanonicalPath { get; set; }
+    [Parameter] public string? Image { get; set; }
+    [Parameter] public string OpenGraphType { get; set; } = "website";
+    private string CanonicalUrl => new Uri(new Uri(Navigation.BaseUri), CanonicalPath ?? new Uri(Navigation.Uri).AbsolutePath).AbsoluteUri;
+    private string? AbsoluteImage => string.IsNullOrWhiteSpace(Image) ? null : Uri.TryCreate(Image, UriKind.Absolute, out var absolute) ? absolute.AbsoluteUri : new Uri(new Uri(Navigation.BaseUri), Image).AbsoluteUri;
+}

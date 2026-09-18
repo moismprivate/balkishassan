@@ -1,0 +1,36 @@
+@page "/category/{Slug}"
+@inject ApplicationDbContext Db
+@inject IHttpContextAccessor HttpContextAccessor
+@if (Category is null)
+{
+    <SeoHead Title="الصفحة غير موجودة — بلقيس حميد حسن" Description="تعذر العثور على هذا القسم." CanonicalPath="@($"/category/{Slug}")" />
+    <section class="status-page shell"><span>404</span><h1>الصفحة غير موجودة</h1><a href="/">العودة إلى الرئيسية</a></section>
+}
+else
+{
+    <SeoHead Title="@(Category.Name + " — بلقيس حميد حسن")" Description="@SeoText.Description(Category.Description, $"أرشيف {Category.Name} للشاعرة بلقيس حميد حسن.")" CanonicalPath="@CanonicalPath" />
+    <header class="page-header category-page-header shell"><nav class="breadcrumbs"><a href="/">الرئيسية</a><span>/</span><span>@Category.Name</span></nav><span class="eyebrow">الأرشيف</span><h1>@Category.Name</h1>@if (!string.IsNullOrWhiteSpace(Category.Description)) { <p>@Category.Description</p> }</header>
+    <section class="shell section category-archive-section"><div class="archive-grid">@if (Items.Count == 0) { <p class="empty-state">لا توجد منشورات في هذا القسم بعد.</p> } @foreach (var item in Items) { <ContentCard Item="item" /> }</div>
+    @if (TotalPages > 1) { <nav class="pagination" aria-label="صفحات"><a class="@(Page <= 1 ? "disabled" : "")" href="/category/@Slug?page=@(Page - 1)">السابق</a><span>@Page / @TotalPages</span><a class="@(Page >= TotalPages ? "disabled" : "")" href="/category/@Slug?page=@(Page + 1)">التالي</a></nav> }</section>
+}
+@code {
+    [Parameter] public string Slug { get; set; } = string.Empty;
+    [SupplyParameterFromQuery(Name = "page")] public int Page { get; set; } = 1;
+    private Category? Category;
+    private List<ContentItem> Items = [];
+    private int TotalPages = 1;
+    private string CanonicalPath => Page > 1 ? $"/category/{Slug}?page={Page}" : $"/category/{Slug}";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        const int pageSize = 12;
+        Page = Math.Max(1, Page);
+        Category = await Db.Categories.AsNoTracking().SingleOrDefaultAsync(x => x.Slug == Slug && x.IsVisible);
+        if (Category is null) { if (HttpContextAccessor.HttpContext is { } context) context.Response.StatusCode = 404; return; }
+        var query = Db.ContentItems.AsNoTracking().Include(x => x.Category).Where(x => x.CategoryId == Category.Id && x.IsPublished && (x.PublishedAt == null || x.PublishedAt <= DateTimeOffset.UtcNow));
+        var count = await query.CountAsync();
+        TotalPages = Math.Max(1, (int)Math.Ceiling(count / (double)pageSize));
+        Page = Math.Min(Page, TotalPages);
+        Items = await query.OrderByDescending(x => x.PublishedAt.HasValue).ThenByDescending(x => x.PublishedAt).ThenBy(x => x.SortOrder).ThenByDescending(x => x.Id).Skip((Page - 1) * pageSize).Take(pageSize).ToListAsync();
+    }
+}

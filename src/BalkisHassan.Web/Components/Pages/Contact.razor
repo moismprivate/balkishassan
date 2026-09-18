@@ -1,0 +1,6 @@
+@page "/contact"
+@inject ApplicationDbContext Db
+<SeoHead Title="البريد الإلكتروني — بلقيس حميد حسن" Description="بيانات الاتصال المنشورة للشاعرة والكاتبة بلقيس حميد حسن." CanonicalPath="/contact" />
+<header class="page-header shell"><nav class="breadcrumbs"><a href="/">الرئيسية</a><span>/</span><span>البريد الإلكتروني</span></nav><span class="eyebrow">تواصل</span><h1>البريد الإلكتروني</h1><p>بيانات الاتصال المنشورة في الموقع.</p></header>
+<section class="section shell contact-grid">@foreach (var contact in Contacts) { <article><h2>@contact.Name</h2>@if (!string.IsNullOrWhiteSpace(contact.Email)) { <p><span>البريد</span><a href="mailto:@contact.Email">@contact.Email</a></p> } @if (!string.IsNullOrWhiteSpace(contact.Telephone)) { <p><span>الهاتف</span><b dir="ltr">@contact.Telephone</b></p> } @if (!string.IsNullOrWhiteSpace(contact.Mobile)) { <p><span>المحمول</span><b dir="ltr">@contact.Mobile</b></p> } @if (!string.IsNullOrWhiteSpace(contact.Address)) { <p><span>العنوان</span>@contact.Address</p> } @if (!string.IsNullOrWhiteSpace(contact.AdditionalInfo)) { <div>@((MarkupString)contact.AdditionalInfo)</div> }</article> }</section>
+@code { private List<ContactInfo> Contacts = []; protected override async Task OnInitializedAsync() => Contacts = await Db.ContactInfos.AsNoTracking().Where(x => x.IsVisible).OrderBy(x => x.Id).ToListAsync(); }

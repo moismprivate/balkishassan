@@ -1,0 +1,18 @@
+@page "/admin/categories"
+@layout AdminLayout
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject IServiceScopeFactory ScopeFactory
+<PageTitle>التصنيفات — إدارة الموقع</PageTitle><HeadContent><meta name="robots" content="noindex,nofollow" /></HeadContent>
+<header class="admin-heading"><div><span>تنظيم المحتوى</span><h1>التصنيفات</h1><p>رتبي أبواب الموقع وأسماءها.</p></div></header>
+@if (!string.IsNullOrWhiteSpace(Message)) { <div class="flash">@Message</div> }
+<section class="form-card new-category"><h2>إضافة تصنيف</h2><div class="category-form-row"><label>الاسم<input @bind="NewCategory.Name" /></label><label>الرابط المختصر<input @bind="NewCategory.Slug" dir="ltr" /></label><label>الترتيب<input @bind="NewCategory.SortOrder" type="number" /></label><label class="check"><input @bind="NewCategory.IsVisible" type="checkbox" /> ظاهر</label><button class="primary-button" @onclick="AddAsync">إضافة</button></div></section>
+<div class="category-admin-list">@foreach (var category in CategoriesList) { <section class="form-card" @key="category.Id"><div class="category-form-row"><label>الاسم<input @bind="category.Name" /></label><label>الرابط<input @bind="category.Slug" dir="ltr" /></label><label>الترتيب<input @bind="category.SortOrder" type="number" /></label><label class="check"><input @bind="category.IsVisible" type="checkbox" /> ظاهر</label></div><label>الوصف<textarea @bind="category.Description" rows="2"></textarea></label><button class="secondary-button" @onclick="() => SaveAsync(category)">حفظ التعديلات</button></section> }</div>
+@code {
+    private List<Category> CategoriesList=[]; private Category NewCategory=new(){IsVisible=true}; private string? Message;
+    protected override async Task OnInitializedAsync()=>await LoadAsync();
+    private async Task LoadAsync(){await using var scope=ScopeFactory.CreateAsyncScope();var db=scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();CategoriesList=await db.Categories.AsNoTracking().OrderBy(x=>x.SortOrder).ThenBy(x=>x.Name).ToListAsync();}
+    private async Task AddAsync(){if(string.IsNullOrWhiteSpace(NewCategory.Name))return;await using var scope=ScopeFactory.CreateAsyncScope();var db=scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();NewCategory.Name=NewCategory.Name.Trim();NewCategory.Slug=await UniqueSlugAsync(db,NewCategory.Slug,NewCategory.Name,0);db.Categories.Add(NewCategory);await db.SaveChangesAsync();NewCategory=new Category{IsVisible=true};Message="تمت إضافة التصنيف.";await LoadAsync();}
+    private async Task SaveAsync(Category category){await using var scope=ScopeFactory.CreateAsyncScope();var db=scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();var stored=await db.Categories.FindAsync(category.Id);if(stored is null)return;stored.Name=category.Name.Trim();stored.Slug=await UniqueSlugAsync(db,category.Slug,category.Name,category.Id);stored.Description=category.Description?.Trim();stored.SortOrder=category.SortOrder;stored.IsVisible=category.IsVisible;await db.SaveChangesAsync();Message="تم حفظ التعديلات.";await LoadAsync();}
+    private static async Task<string> UniqueSlugAsync(ApplicationDbContext db,string? requested,string name,int id){var basis=SlugGenerator.Generate(string.IsNullOrWhiteSpace(requested)?name:requested);var candidate=basis;var suffix=2;while(await db.Categories.AnyAsync(x=>x.Slug==candidate&&x.Id!=id))candidate=$"{basis}-{suffix++}";return candidate;}
+}

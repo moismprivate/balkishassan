@@ -1,6 +1,6 @@
 # Joomla-migratierapport
 
-Gegenereerd: 2026-09-18 10:38 +02:00
+Gegenereerd: 2026-09-18 16:49 +02:00
 
 ## Resultaat
 
@@ -11,7 +11,7 @@ Gegenereerd: 2026-09-18 10:38 +02:00
 | Externe links | 15 |
 | Contactrecords | 1 |
 | Mediabestanden | 63 |
-| Legacy-redirects | 522 |
+| Legacy-redirects | 1034 |
 
 ## Gemigreerde categorieën
 

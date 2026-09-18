@@ -1,6 +1,0 @@
-@model BalkisHassan.Web.Models.AdminContentListViewModel
-@{ ViewData["Title"] = "المحتويات"; }
-<header class="admin-heading"><div><span>الأرشيف</span><h1>المحتويات</h1></div><a class="primary-button" href="/admin/content/new">محتوى جديد +</a></header>
-<form class="admin-search" method="get"><input type="search" name="q" value="@Model.Query" placeholder="ابحثي بالعنوان" /><button>بحث</button></form>
-<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>العنوان</th><th>التصنيف</th><th>الحالة</th><th>آخر تعديل</th><th></th></tr></thead><tbody>@foreach (var item in Model.Items) { <tr><td><strong>@item.Title</strong><small>@item.Type</small></td><td>@item.Category.Name</td><td><span class="status @(item.IsPublished ? "published" : "draft")">@(item.IsPublished ? "منشور" : "مسودة")</span></td><td>@item.UpdatedAt.LocalDateTime.ToString("d MMM yyyy")</td><td class="actions"><a href="/admin/content/@item.Id">تعديل</a><a class="danger-link" href="/admin/content/@item.Id/delete">حذف</a></td></tr> }</tbody></table></div>
-@if (Model.TotalPages > 1) { <nav class="pagination"><a href="?q=@Model.Query&page=@(Model.Page - 1)" class="@(Model.Page <= 1 ? "disabled" : "")">السابق</a><span>@Model.Page / @Model.TotalPages</span><a href="?q=@Model.Query&page=@(Model.Page + 1)" class="@(Model.Page >= Model.TotalPages ? "disabled" : "")">التالي</a></nav> }

@@ -1,0 +1,2 @@
+<article class="content-row"><time datetime="@Item.PublishedAt?.ToString("O")"><b>@Item.PublishedAt?.Day</b><span>@Item.PublishedAt?.ToString("MMMM yyyy")</span></time><div><small>@Item.Category.Name</small><h3><a href="/content/@Item.Slug">@Item.Title</a></h3></div><a class="row-arrow" href="/content/@Item.Slug" aria-label="اقرأ @Item.Title">←</a></article>
+@code { [Parameter, EditorRequired] public ContentItem Item { get; set; } = null!; }

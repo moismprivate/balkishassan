@@ -7,13 +7,19 @@ public sealed class LegacyRedirectMiddleware(RequestDelegate next)
 {
     private static readonly IReadOnlyDictionary<string, string> MenuRedirects = new Dictionary<string, string>
     {
-        ["1"] = "/", ["23"] = "/category/قصائد-بصوت-الشاعرة", ["2"] = "/category/كتب-بلقيس",
+        ["1"] = "/", ["23"] = "/category/قصائد-بصوت-الشاعرة", ["2"] = "/content/أعمال-الشاعرة",
         ["3"] = "/category/من-مقالات-الشاعرة", ["18"] = "/category/محطات", ["4"] = "/category/كتب-عن-الشاعرة",
         ["5"] = "/category/قصائد", ["11"] = "/category/لقاءات-مع-الشاعرة", ["21"] = "/links", ["9"] = "/contact"
     };
 
     public async Task InvokeAsync(HttpContext context, ApplicationDbContext db)
     {
+        if (context.Request.Path.Equals("/category/كتب-بلقيس", StringComparison.OrdinalIgnoreCase))
+        {
+            context.Response.Redirect(EncodeLocation("/content/أعمال-الشاعرة"), true);
+            return;
+        }
+
         if (context.Request.Path.Equals("/index.php", StringComparison.OrdinalIgnoreCase) ||
             context.Request.Path.Equals("/content/index.php", StringComparison.OrdinalIgnoreCase))
         {

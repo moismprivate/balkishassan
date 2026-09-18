@@ -1,3 +1,0 @@
-@model BalkisHassan.Domain.ContentItem
-@{ ViewData["Title"] = "حذف المحتوى"; }
-<section class="confirm-panel"><span>!</span><h1>هل تريدين حذف هذا المحتوى؟</h1><h2>@Model.Title</h2><p>سيُحذف النص من الموقع نهائياً. لا يمكن التراجع عن هذه الخطوة.</p><form method="post" action="/admin/content/@Model.Id/delete"><button class="danger-button" type="submit">نعم، احذف المحتوى</button><a class="secondary-button" href="/admin/contents">إلغاء</a></form></section>

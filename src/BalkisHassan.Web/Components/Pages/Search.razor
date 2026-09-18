@@ -1,0 +1,15 @@
+@page "/search"
+@inject ApplicationDbContext Db
+<SeoHead Title="البحث — بلقيس حميد حسن" Description="البحث في أرشيف قصائد وكتب ومقالات بلقيس حميد حسن." CanonicalPath="/search" />
+<header class="page-header category-page-header shell"><span class="eyebrow">الأرشيف</span><h1>البحث</h1><form class="page-search" action="/search" method="get"><label for="search-q">ابحث في العناوين والنصوص</label><div><input id="search-q" name="q" value="@Query" type="search" /><button>بحث</button></div></form></header>
+<section class="section category-archive-section shell"><div class="latest-list light-list">@if (!string.IsNullOrWhiteSpace(Query) && Results.Count == 0) { <p class="empty-state">لم نعثر على نتائج لعبارة «@Query».</p> } @foreach (var item in Results) { <ContentRow Item="item" /> }</div></section>
+@code {
+    [SupplyParameterFromQuery(Name = "q")] public string? Q { get; set; }
+    private string Query = string.Empty;
+    private List<ContentItem> Results = [];
+    protected override async Task OnParametersSetAsync()
+    {
+        Query = Q?.Trim() ?? string.Empty;
+        Results = string.IsNullOrWhiteSpace(Query) ? [] : await Db.ContentItems.AsNoTracking().Include(x => x.Category).Where(x => x.IsPublished && (x.PublishedAt == null || x.PublishedAt <= DateTimeOffset.UtcNow) && (EF.Functions.ILike(x.Title, $"%{Query}%") || EF.Functions.ILike(x.Content, $"%{Query}%"))).OrderByDescending(x => x.PublishedAt.HasValue).ThenByDescending(x => x.PublishedAt).Take(50).ToListAsync();
+    }
+}

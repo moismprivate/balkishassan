@@ -1,0 +1,14 @@
+@inherits LayoutComponentBase
+<a class="skip-link" href="#main">انتقل إلى المحتوى</a>
+<header class="site-header"><div class="header-inner">
+    <a class="brand" href="/" aria-label="الصفحة الرئيسية"><img class="brand-photo" src="/uploads/images/legacy/balkis-eb76109e.jpg" alt="" width="54" height="54" /><span><strong>بلقيس حميد حسن</strong><small>شاعرة وكاتبة عراقية</small></span></a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="main-menu"><span></span><span></span><span></span><b>القائمة</b></button>
+    <nav id="main-menu" class="main-nav" aria-label="التنقل الرئيسي">
+        <a href="/">الرئيسية</a><a href="/category/قصائد">قصائد</a><a href="/content/أعمال-الشاعرة">كتب بلقيس</a>
+        <a href="/category/من-مقالات-الشاعرة">مقالات</a><a href="/category/محطات">محطات</a><a href="/category/كتب-عن-الشاعرة">كتب عن الشاعرة</a><a href="/category/لقاءات-مع-الشاعرة">لقاءات</a>
+        <a href="/category/قصائد-بصوت-الشاعرة">بصوت الشاعرة</a><a href="/links">مواقع</a><a href="/contact">البريد الإلكتروني</a>
+    </nav>
+    <form class="header-search" action="/search" method="get" role="search"><label class="sr-only" for="q">بحث</label><input id="q" name="q" type="search" placeholder="ابحث في الموقع" /><button type="submit" aria-label="بحث">⌕</button></form>
+</div></header>
+<main id="main">@Body</main>
+<footer class="site-footer"><div class="footer-inner"><div><strong>بلقيس حميد حسن</strong><p>مساحة للشعر والكتابة والذاكرة.</p></div><nav aria-label="روابط التذييل"><a href="/">الرئيسية</a><a href="/links">مواقع</a><a href="/contact">اتصل بنا</a></nav><p class="copyright">© @DateTime.Now.Year جميع الحقوق محفوظة</p></div></footer>

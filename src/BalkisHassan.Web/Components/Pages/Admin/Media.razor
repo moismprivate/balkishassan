@@ -1,0 +1,16 @@
+@page "/admin/media"
+@layout AdminLayout
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject IServiceScopeFactory ScopeFactory
+@inject MediaStorageService Storage
+<PageTitle>الوسائط — إدارة الموقع</PageTitle><HeadContent><meta name="robots" content="noindex,nofollow" /></HeadContent>
+<header class="admin-heading"><div><span>الصور والملفات</span><h1>الوسائط</h1><p>الأنواع المسموحة: JPG، PNG، WEBP، GIF، MP3، OGG، WAV، PDF. الحد الأقصى 25 ميغابايت.</p></div></header>
+<section class="upload-panel"><div class="upload-form"><div><label for="file">اختيار الملف</label><InputFile id="file" OnChange="SelectFile" accept="image/jpeg,image/png,image/webp,image/gif,audio/mpeg,audio/ogg,audio/wav,application/pdf" /></div><div><label for="alt">النص البديل للصورة</label><input id="alt" @bind="AltText" /></div><button class="primary-button" @onclick="UploadAsync" disabled="@(SelectedFile is null || Uploading)">@(Uploading?"جارٍ الرفع…":"رفع الملف")</button></div>@if (!string.IsNullOrWhiteSpace(Error)) { <p class="validation">@Error</p> }</section>
+<div class="media-grid">@foreach(var item in Items){<article>@if(item.MimeType.StartsWith("image/")){<img src="@item.Path" alt="@item.AltText" loading="lazy" />}else if(item.MimeType.StartsWith("audio/")){<div class="file-icon">♫</div>}else{<div class="file-icon">PDF</div>}<div><strong>@item.OriginalFileName</strong><input value="@item.Path" readonly dir="ltr" aria-label="مسار الملف" /><small>@Math.Ceiling(item.Size/1024d) KB</small></div></article>}</div>
+@code {
+    private const long MaxSize=25*1024*1024; private List<MediaItem> Items=[]; private IBrowserFile? SelectedFile; private string? AltText; private string? Error; private bool Uploading;
+    protected override async Task OnInitializedAsync()=>await LoadAsync(); private void SelectFile(InputFileChangeEventArgs e){SelectedFile=e.File;Error=null;}
+    private async Task UploadAsync(){if(SelectedFile is null)return;Uploading=true;Error=null;try{await using var input=SelectedFile.OpenReadStream(MaxSize);var item=await Storage.SaveAsync(input,SelectedFile.Name,SelectedFile.Size,AltText,CancellationToken.None);await using var scope=ScopeFactory.CreateAsyncScope();var db=scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();db.MediaItems.Add(item);await db.SaveChangesAsync();SelectedFile=null;AltText=null;await LoadAsync();}catch(Exception ex) when(ex is InvalidOperationException or IOException){Error=ex.Message;}finally{Uploading=false;}}
+    private async Task LoadAsync(){await using var scope=ScopeFactory.CreateAsyncScope();var db=scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();Items=await db.MediaItems.AsNoTracking().OrderByDescending(x=>x.CreatedAt).Take(250).ToListAsync();}
+}

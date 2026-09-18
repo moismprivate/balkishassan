@@ -1,0 +1,5 @@
+@page "/not-found"
+@inject IHttpContextAccessor HttpContextAccessor
+<SeoHead Title="الصفحة غير موجودة — بلقيس حميد حسن" Description="الصفحة المطلوبة غير موجودة." CanonicalPath="/not-found" />
+<section class="status-page shell"><span>404</span><h1>الصفحة غير موجودة</h1><p>ربما تغيّر عنوان الصفحة أو نُقلت إلى مكان آخر.</p><a href="/">العودة إلى الرئيسية</a></section>
+@code { protected override void OnInitialized() { if (HttpContextAccessor.HttpContext is { } context) context.Response.StatusCode = 404; } }

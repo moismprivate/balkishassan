@@ -1,0 +1,9 @@
+@page "/admin/content/{Id:int}/delete"
+@layout AdminLayout
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject IServiceScopeFactory ScopeFactory
+@inject NavigationManager Navigation
+<PageTitle>حذف المحتوى — إدارة الموقع</PageTitle><HeadContent><meta name="robots" content="noindex,nofollow" /></HeadContent>
+@if (Item is not null) { <section class="confirm-panel"><span>!</span><h1>هل تريدين حذف هذا المحتوى؟</h1><h2>@Item.Title</h2><p>سيُحذف النص من الموقع نهائياً. لا يمكن التراجع عن هذه الخطوة.</p><div class="confirm-actions"><button class="danger-button" @onclick="DeleteAsync">نعم، احذف المحتوى</button><a class="secondary-button" href="/admin/contents">إلغاء</a></div></section> }
+@code { [Parameter] public int Id{get;set;} private ContentItem? Item; protected override async Task OnInitializedAsync(){await using var scope=ScopeFactory.CreateAsyncScope();var db=scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();Item=await db.ContentItems.AsNoTracking().SingleOrDefaultAsync(x=>x.Id==Id);} private async Task DeleteAsync(){await using var scope=ScopeFactory.CreateAsyncScope();var db=scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();var item=await db.ContentItems.FindAsync(Id);if(item is not null){db.ContentItems.Remove(item);await db.SaveChangesAsync();}Navigation.NavigateTo("/admin/contents",true);} }

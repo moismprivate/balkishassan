@@ -1,0 +1,13 @@
+@page "/admin"
+@layout AdminLayout
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject IServiceScopeFactory ScopeFactory
+<PageTitle>لوحة التحكم — إدارة الموقع</PageTitle><HeadContent><meta name="robots" content="noindex,nofollow" /></HeadContent>
+<header class="admin-heading"><div><span>مرحباً</span><h1>لوحة التحكم</h1><p>كل ما تحتاجينه للنشر وإدارة الأرشيف.</p></div><a class="primary-button" href="/admin/content/new">محتوى جديد +</a></header>
+<div class="stats-grid"><article><b>@Published</b><span>منشور</span></article><article><b>@Drafts</b><span>مسودة</span></article><article><b>@Categories</b><span>تصنيف</span></article><article><b>@Media</b><span>ملف وسائط</span></article></div>
+<div class="quick-actions"><a href="/admin/content/new?type=Poem"><span>✦</span><h2>قصيدة جديدة</h2><p>اكتبي القصيدة وانشريها مباشرة.</p></a><a href="/admin/content/new?type=Article"><span>ق</span><h2>مقال جديد</h2><p>أضيفي مقالاً أو نصاً إلى الأرشيف.</p></a><a href="/admin/media"><span>▧</span><h2>رفع صورة أو ملف</h2><p>إدارة الصور والتسجيلات والكتب.</p></a></div>
+@code {
+    private int Published; private int Drafts; private int Categories; private int Media;
+    protected override async Task OnInitializedAsync() { await using var scope = ScopeFactory.CreateAsyncScope(); var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>(); Published = await db.ContentItems.CountAsync(x => x.IsPublished); Drafts = await db.ContentItems.CountAsync(x => !x.IsPublished); Categories = await db.Categories.CountAsync(); Media = await db.MediaItems.CountAsync(); }
+}
