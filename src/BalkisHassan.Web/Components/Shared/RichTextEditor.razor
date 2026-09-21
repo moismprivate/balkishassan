@@ -1,0 +1,87 @@
+@inherits InputBase<string?>
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+@using System.Diagnostics.CodeAnalysis
+
+<div class="rich-text-editor" @ref="_host">
+    <div class="editor-toolbar" role="toolbar" aria-label="أدوات تنسيق النص">
+        <select data-editor-block aria-label="نوع الفقرة" title="نوع الفقرة">
+            <option value="p">فقرة</option>
+            <option value="h2">عنوان رئيسي</option>
+            <option value="h3">عنوان فرعي</option>
+            <option value="blockquote">اقتباس</option>
+        </select>
+        <button type="button" data-editor-command="bold" title="عريض"><strong>عريض</strong></button>
+        <button type="button" data-editor-command="italic" title="مائل"><em>مائل</em></button>
+        <button type="button" data-editor-command="underline" title="تحته خط"><u>تحته خط</u></button>
+        <button type="button" data-editor-command="insertUnorderedList" title="قائمة نقطية">• قائمة</button>
+        <button type="button" data-editor-command="insertOrderedList" title="قائمة مرقمة">١. قائمة</button>
+        <button type="button" data-editor-action="link" title="إضافة رابط">رابط</button>
+        <button type="button" data-editor-command="unlink" title="حذف الرابط">حذف الرابط</button>
+        <button type="button" data-editor-command="removeFormat" title="إزالة التنسيق">مسح التنسيق</button>
+        <button type="button" data-editor-command="undo" title="تراجع" aria-label="تراجع">↶</button>
+        <button type="button" data-editor-command="redo" title="إعادة" aria-label="إعادة">↷</button>
+        <button type="button" data-editor-action="source" class="editor-source-toggle" title="تحرير HTML">HTML</button>
+    </div>
+    <div class="rich-editor @CssClass" contenteditable="true" role="textbox" aria-multiline="true" spellcheck="true" @attributes="AdditionalAttributes">@((MarkupString)(CurrentValue ?? string.Empty))</div>
+    <textarea class="editor-source" dir="rtl" aria-label="مصدر HTML">@CurrentValue</textarea>
+    <p class="editor-help">حددي النص ثم اختاري التنسيق. يمكنك أيضاً تعديل HTML عند الحاجة.</p>
+</div>
+
+@code {
+    private ElementReference _host;
+    private IJSObjectReference? _module;
+    private DotNetObjectReference<RichTextEditor>? _self;
+    private string? _editorValue;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/rich-text-editor.js");
+            _self = DotNetObjectReference.Create(this);
+            _editorValue = CurrentValue ?? string.Empty;
+            await _module.InvokeVoidAsync("initialize", _host, _editorValue, _self);
+            return;
+        }
+
+        var currentValue = CurrentValue ?? string.Empty;
+        if (_module is not null && !string.Equals(currentValue, _editorValue, StringComparison.Ordinal))
+        {
+            _editorValue = currentValue;
+            await _module.InvokeVoidAsync("setHtml", _host, currentValue);
+        }
+    }
+
+    [JSInvokable]
+    public Task UpdateValue(string html)
+    {
+        _editorValue = html;
+        CurrentValue = html;
+        return Task.CompletedTask;
+    }
+
+    protected override bool TryParseValueFromString(string? value, [MaybeNullWhen(false)] out string? result, [NotNullWhen(false)] out string? validationErrorMessage)
+    {
+        result = value;
+        validationErrorMessage = null;
+        return true;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_module is not null)
+        {
+            try
+            {
+                await _module.InvokeVoidAsync("dispose", _host);
+                await _module.DisposeAsync();
+            }
+            catch (JSDisconnectedException)
+            {
+            }
+        }
+
+        _self?.Dispose();
+    }
+}

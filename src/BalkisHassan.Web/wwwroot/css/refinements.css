@@ -165,6 +165,80 @@
   padding-inline: 15px;
 }
 
+.rich-text-editor { direction: rtl; }
+.rich-text-editor .editor-toolbar {
+  position: sticky;
+  top: 73px;
+  z-index: 5;
+  align-items: center;
+  gap: 6px;
+  padding: 9px;
+  border-color: #d5ccc1;
+  background: #f4efe8;
+}
+.rich-text-editor .editor-toolbar button,
+.rich-text-editor .editor-toolbar select {
+  min-height: 36px;
+  border: 1px solid #d5ccc1;
+  border-radius: 3px;
+  background: #fff;
+  color: var(--ink);
+  padding: 6px 10px;
+  font: 500 12px / 1.4 var(--sans);
+  cursor: pointer;
+}
+.rich-text-editor .editor-toolbar button:hover,
+.rich-text-editor .editor-toolbar button:focus-visible,
+.rich-text-editor .editor-toolbar select:focus-visible,
+.rich-text-editor .editor-toolbar button.active {
+  border-color: var(--wine);
+  color: var(--wine);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(138, 62, 70, .1);
+}
+.rich-text-editor .rich-editor {
+  min-height: 520px;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.rich-text-editor .rich-editor:focus {
+  border-color: var(--wine);
+  box-shadow: 0 0 0 3px rgba(138, 62, 70, .1);
+}
+.rich-text-editor .rich-editor:empty::before {
+  content: "ابدئي كتابة النص هنا…";
+  color: #9b928b;
+  pointer-events: none;
+}
+.rich-text-editor .rich-editor p { margin: 0 0 1em; }
+.rich-text-editor .rich-editor h2,
+.rich-text-editor .rich-editor h3 { margin: 1.2em 0 .55em; line-height: 1.45; }
+.rich-text-editor .rich-editor blockquote {
+  margin: 1.2em 0;
+  padding: 4px 20px;
+  border-right: 3px solid var(--wine);
+  color: var(--wine-dark);
+}
+.rich-text-editor .editor-source {
+  display: none;
+  min-height: 520px;
+  padding: 18px;
+  border: 1px solid #d5ccc1;
+  background: #211d1b;
+  color: #f8f1e8;
+  direction: ltr;
+  text-align: left;
+  font: 14px / 1.7 Consolas, monospace;
+  resize: vertical;
+}
+.rich-text-editor.is-source-mode .rich-editor { display: none; }
+.rich-text-editor.is-source-mode .editor-source { display: block; }
+.rich-text-editor .editor-help {
+  margin: 7px 2px 0;
+  color: var(--muted);
+  font: 400 11px / 1.6 var(--sans);
+}
+
 @media (max-width: 780px) {
   .brand-photo {
     width: 46px;
@@ -196,6 +270,9 @@
   .biography-copy p { font-size: 17px; }
   .audio-player-main { align-items: flex-start; }
   .audio-meta { min-width: 0; }
+  .rich-text-editor .editor-toolbar { position: static; }
+  .rich-text-editor .rich-editor,
+  .rich-text-editor .editor-source { min-height: 400px; }
 }
 
 @media print {
