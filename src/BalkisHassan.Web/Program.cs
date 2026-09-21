@@ -6,6 +6,7 @@ using BalkisHassan.Web.Components;
 using BalkisHassan.Web.Services;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
@@ -17,6 +18,12 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
     ?? throw new InvalidOperationException("De PostgreSQL-connection-string 'DefaultConnection' ontbreekt.");
 
 builder.Services.AddBalkisInfrastructure(connectionString);
+var dataProtection = builder.Services.AddDataProtection()
+    .SetApplicationName("BalkisHassan");
+if (builder.Environment.IsProduction())
+{
+    dataProtection.PersistKeysToFileSystem(new DirectoryInfo("/var/lib/balkis/dataprotection"));
+}
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddHttpContextAccessor();
