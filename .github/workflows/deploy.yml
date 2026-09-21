@@ -1,0 +1,74 @@
+name: Deploy Balkis
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore BalkisHassan.sln
+
+      - name: Build
+        run: dotnet build BalkisHassan.sln -c Release --no-restore
+
+      - name: Publish
+        run: dotnet publish src/BalkisHassan.Web/BalkisHassan.Web.csproj -c Release -o ./publish --no-build
+
+      - name: Configure SSH
+        shell: bash
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Upload release
+        shell: bash
+        run: |
+          rsync -az \
+            --delete \
+            --exclude 'wwwroot/uploads/' \
+            ./publish/ \
+            "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/balkis/release-next/"
+
+      - name: Activate release
+        shell: bash
+        run: |
+          ssh "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" << 'EOF'
+            set -e
+
+            sudo systemctl stop balkis
+
+            mkdir -p /var/www/balkis/release-previous
+            rm -rf /var/www/balkis/release-previous/*
+            cp -a /var/www/balkis/publish/. /var/www/balkis/release-previous/
+
+            rsync -a \
+              --delete \
+              --exclude 'wwwroot/uploads/' \
+              /var/www/balkis/release-next/ \
+              /var/www/balkis/publish/
+
+            rm -rf /var/www/balkis/release-next
+
+            sudo systemctl start balkis
+
+            sleep 5
+
+            curl --fail http://127.0.0.1:5001/health
+          EOF
