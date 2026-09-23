@@ -18,6 +18,15 @@ public static partial class YouTubeEmbed
         return YouTubePlainUrl().Replace(withoutAnchors, string.Empty).Trim();
     }
 
+    public static string CanonicalUrl(string videoId) => $"https://www.youtube.com/watch?v={videoId}";
+
+    public static string AppendVideoLink(string html, string videoId)
+    {
+        var content = RemoveVideoLinks(html);
+        var separator = string.IsNullOrWhiteSpace(content) ? string.Empty : Environment.NewLine;
+        return $"{content}{separator}<p><a href=\"{CanonicalUrl(videoId)}\">مشاهدة الفيديو على يوتيوب</a></p>";
+    }
+
     [GeneratedRegex(@"(?:youtu\.be/|youtube(?:-nocookie)?\.com/(?:watch\?(?:[^\s""'<>]*&)?v=|embed/|v/))([A-Za-z0-9_-]{11})", RegexOptions.IgnoreCase)]
     private static partial Regex YouTubeUrl();
 

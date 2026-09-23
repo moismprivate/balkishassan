@@ -5,23 +5,231 @@
 @rendermode InteractiveServer
 @inject IServiceScopeFactory ScopeFactory
 @inject ContentSanitizer Sanitizer
+@inject MediaStorageService Storage
 @inject NavigationManager Navigation
-<PageTitle>@(Id == 0 ? "محتوى جديد" : "تعديل المحتوى") — إدارة الموقع</PageTitle><HeadContent><meta name="robots" content="noindex,nofollow" /></HeadContent>
-<header class="admin-heading"><div><span>@(Id == 0 ? "إضافة" : "تحرير")</span><h1>@(Id == 0 ? "محتوى جديد" : Form.Title)</h1></div><a class="secondary-button" href="/admin/contents">عودة إلى القائمة</a></header>
-@if (!string.IsNullOrWhiteSpace(Error)) { <div class="validation">@Error</div> }
-<EditForm Model="Form" OnValidSubmit="SaveAsync" FormName="content-edit" class="content-form"><DataAnnotationsValidator /><ValidationSummary />
-<div class="form-layout"><div class="form-main"><label for="title">العنوان</label><InputText id="title" @bind-Value="Form.Title" class="title-input" /><ValidationMessage For="@(() => Form.Title)" />
-<label for="summary">المقدمة القصيرة</label><InputTextArea id="summary" @bind-Value="Form.Summary" rows="3" />
-<label for="content">النص</label><RichTextEditor id="content" @bind-Value="Form.Content" /><ValidationMessage For="@(() => Form.Content)" />
-<details class="advanced-fields"><summary>الرابط المختصر والملفات</summary><label for="slug">الرابط المختصر</label><InputText id="slug" @bind-Value="Form.Slug" dir="ltr" /><label for="main-image">الصورة الرئيسية</label><InputText id="main-image" @bind-Value="Form.MainImage" list="image-list" dir="ltr" /><datalist id="image-list">@foreach (var media in Media.Where(x => x.MimeType.StartsWith("image/"))) { <option value="@media.Path">@media.OriginalFileName</option> }</datalist><label for="audio">التسجيل الصوتي</label><InputText id="audio" @bind-Value="Form.AudioPath" list="audio-list" dir="ltr" /><datalist id="audio-list">@foreach (var media in Media.Where(x => x.MimeType.StartsWith("audio/"))) { <option value="@media.Path">@media.OriginalFileName</option> }</datalist><label for="document">ملف الكتاب أو الوثيقة</label><InputText id="document" @bind-Value="Form.DocumentPath" list="document-list" dir="ltr" /><datalist id="document-list">@foreach (var media in Media.Where(x => x.MimeType == "application/pdf")) { <option value="@media.Path">@media.OriginalFileName</option> }</datalist></details></div>
-<aside class="form-side"><div class="form-card"><h2>النشر</h2><label for="category">التصنيف</label><InputSelect id="category" @bind-Value="Form.CategoryId"><option value="0">اختاري تصنيفاً</option>@foreach (var category in Categories) { <option value="@category.Id">@category.Name</option> }</InputSelect><ValidationMessage For="@(() => Form.CategoryId)" /><label for="type">النوع</label><InputSelect id="type" @bind-Value="Form.Type">@foreach (var type in Enum.GetValues<ContentType>()) { <option value="@type">@type</option> }</InputSelect><label for="published">تاريخ النشر</label><InputDate id="published" @bind-Value="Form.PublishedAt" Type="InputDateType.DateTimeLocal" /><label class="check"><InputCheckbox @bind-Value="Form.IsPublished" /> منشور</label><label class="check"><InputCheckbox @bind-Value="Form.Featured" /> مميز في الرئيسية</label><label for="sort">ترتيب يدوي</label><InputNumber id="sort" @bind-Value="Form.SortOrder" /><button class="primary-button" type="submit" disabled="@Saving">@(Saving ? "جارٍ الحفظ…" : "حفظ المحتوى")</button></div></aside></div></EditForm>
+
+<PageTitle>@(Id == 0 ? "محتوى جديد" : "تعديل المحتوى") — إدارة الموقع</PageTitle>
+<HeadContent><meta name="robots" content="noindex,nofollow" /></HeadContent>
+
+<header class="admin-heading">
+    <div><span>@(Id == 0 ? "إضافة" : "تحرير")</span><h1>@(Id == 0 ? "محتوى جديد" : Form.Title)</h1></div>
+    <a class="secondary-button" href="/admin/contents">عودة إلى القائمة</a>
+</header>
+@if (!string.IsNullOrWhiteSpace(Error)) { <div class="validation" role="alert">@Error</div> }
+
+<EditForm Model="Form" OnValidSubmit="SaveAsync" FormName="content-edit" class="content-form">
+    <DataAnnotationsValidator /><ValidationSummary />
+    <div class="form-layout">
+        <div class="form-main">
+            <label for="title">العنوان</label>
+            <InputText id="title" @bind-Value="Form.Title" class="title-input" />
+            <ValidationMessage For="@(() => Form.Title)" />
+            <label for="summary">المقدمة القصيرة</label>
+            <InputTextArea id="summary" @bind-Value="Form.Summary" rows="3" />
+            <label for="content">النص</label>
+            <RichTextEditor id="content" @bind-Value="Form.Content" />
+            <ValidationMessage For="@(() => Form.Content)" />
+
+            <section class="content-media-tools" aria-labelledby="media-heading">
+                <div class="media-tools-heading">
+                    <span>فيديو وصوت</span>
+                    <h2 id="media-heading">إضافة وسائط إلى هذا المحتوى</h2>
+                    <p>اختاري التصنيف من صندوق النشر، ثم أضيفي الفيديو أو التسجيل هنا. سيظهران في صفحة هذا المحتوى.</p>
+                </div>
+                <div class="content-media-grid">
+                    <div class="content-media-card">
+                        <div class="media-field-heading">
+                            <span class="media-field-icon" aria-hidden="true">▶</span>
+                            <div><h3>فيديو يوتيوب</h3><p>ألصقي رابط الفيديو فقط، ولا حاجة لنسخ كود التضمين.</p></div>
+                        </div>
+                        <label for="youtube-url">رابط يوتيوب</label>
+                        <InputText id="youtube-url" @bind-Value="Form.YouTubeUrl" dir="ltr" placeholder="https://www.youtube.com/watch?v=..." />
+                        <small class="field-help">مثال: https://youtu.be/xxxxxxxxxxx</small>
+                        @if (!string.IsNullOrWhiteSpace(Form.YouTubeUrl))
+                        {
+                            var videoId = YouTubeEmbed.FindVideoId(Form.YouTubeUrl);
+                            if (videoId is not null)
+                            {
+                                <p class="field-success">✓ تم التعرف على رابط يوتيوب. سيظهر الفيديو بدون تشغيل تلقائي.</p>
+                                <a class="secondary-button media-preview-link" href="@YouTubeEmbed.CanonicalUrl(videoId)" target="_blank" rel="noopener noreferrer">معاينة الفيديو على يوتيوب</a>
+                            }
+                            else
+                            {
+                                <p class="field-error">أدخلي رابطاً صحيحاً من YouTube أو youtu.be.</p>
+                            }
+                        }
+                    </div>
+
+                    <div class="content-media-card">
+                        <div class="media-field-heading">
+                            <span class="media-field-icon" aria-hidden="true">♫</span>
+                            <div><h3>تسجيل صوتي</h3><p>اختاري تسجيلاً موجوداً، أو ارفعي ملفاً جديداً من جهازك.</p></div>
+                        </div>
+                        <label for="audio">التسجيل الموجود</label>
+                        <InputSelect id="audio" @bind-Value="Form.AudioPath">
+                            <option value="">بدون تسجيل صوتي</option>
+                            @foreach (var media in AudioItems) { <option value="@media.Path">@media.OriginalFileName</option> }
+                        </InputSelect>
+                        @if (!string.IsNullOrWhiteSpace(Form.AudioPath))
+                        {
+                            <div class="admin-audio-preview"><span>استمعي للتسجيل المختار:</span><audio controls preload="metadata" src="@Form.AudioPath">متصفحك لا يدعم تشغيل الصوت.</audio></div>
+                        }
+                        <div class="audio-upload-box">
+                            <label for="new-audio">رفع تسجيل جديد</label>
+                            <InputFile id="new-audio" OnChange="SelectAudio" accept=".mp3,.ogg,.wav,audio/mpeg,audio/ogg,audio/wav" />
+                            <small class="field-help">MP3 أو OGG أو WAV، بحد أقصى 25 ميغابايت.</small>
+                            @if (SelectedAudio is not null)
+                            {
+                                <p class="selected-file">الملف المختار: <strong dir="ltr">@SelectedAudio.Name</strong></p>
+                                <button class="secondary-button" type="button" @onclick="UploadAudioAsync" disabled="@UploadingAudio">@(UploadingAudio ? "جارٍ رفع التسجيل…" : "رفع واختيار هذا التسجيل")</button>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(AudioMessage)) { <p class="field-success" role="status">@AudioMessage</p> }
+                            @if (!string.IsNullOrWhiteSpace(AudioError)) { <p class="field-error" role="alert">@AudioError</p> }
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <details class="advanced-fields">
+                <summary>الرابط المختصر والصورة والوثيقة</summary>
+                <p class="field-help">هذه خيارات إضافية. لا تحتاجين إليها لإضافة فيديو أو تسجيل صوتي.</p>
+                <label for="slug">الرابط المختصر</label><InputText id="slug" @bind-Value="Form.Slug" dir="ltr" />
+                <label for="main-image">الصورة الرئيسية</label><InputText id="main-image" @bind-Value="Form.MainImage" list="image-list" dir="ltr" />
+                <datalist id="image-list">@foreach (var media in Media.Where(x => x.MimeType.StartsWith("image/"))) { <option value="@media.Path">@media.OriginalFileName</option> }</datalist>
+                <label for="document">ملف الكتاب أو الوثيقة</label><InputText id="document" @bind-Value="Form.DocumentPath" list="document-list" dir="ltr" />
+                <datalist id="document-list">@foreach (var media in Media.Where(x => x.MimeType == "application/pdf")) { <option value="@media.Path">@media.OriginalFileName</option> }</datalist>
+            </details>
+        </div>
+
+        <aside class="form-side"><div class="form-card">
+            <h2>النشر</h2>
+            <label for="category">التصنيف</label>
+            <InputSelect id="category" @bind-Value="Form.CategoryId"><option value="0">اختاري تصنيفاً</option>@foreach (var category in Categories) { <option value="@category.Id">@category.Name</option> }</InputSelect>
+            <small class="field-help">الفيديو والتسجيل سيظهران داخل هذا التصنيف مع المحتوى.</small>
+            <ValidationMessage For="@(() => Form.CategoryId)" />
+            <label for="type">النوع</label><InputSelect id="type" @bind-Value="Form.Type">@foreach (var type in Enum.GetValues<ContentType>()) { <option value="@type">@type</option> }</InputSelect>
+            <label for="published">تاريخ النشر</label><InputDate id="published" @bind-Value="Form.PublishedAt" Type="InputDateType.DateTimeLocal" />
+            <label class="check"><InputCheckbox @bind-Value="Form.IsPublished" /> منشور</label>
+            <label class="check"><InputCheckbox @bind-Value="Form.Featured" /> مميز في الرئيسية</label>
+            <label for="sort">ترتيب يدوي</label><InputNumber id="sort" @bind-Value="Form.SortOrder" />
+            <button class="primary-button" type="submit" disabled="@Saving">@(Saving ? "جارٍ الحفظ…" : "حفظ المحتوى")</button>
+        </div></aside>
+    </div>
+</EditForm>
+
 @code {
+    private const long MaximumAudioSize = 25 * 1024 * 1024;
     [Parameter] public int Id { get; set; }
-    [SupplyParameterFromQuery(Name="type")] public string? RequestedType { get; set; }
-    private EditModel Form = new(); private List<Category> Categories = []; private List<MediaItem> Media = []; private string? Error; private bool Saving;
-    protected override async Task OnParametersSetAsync() { await using var scope = ScopeFactory.CreateAsyncScope(); var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>(); Categories = await db.Categories.AsNoTracking().OrderBy(x => x.SortOrder).ToListAsync(); Media = await db.MediaItems.AsNoTracking().OrderByDescending(x => x.CreatedAt).Take(250).ToListAsync(); if (Id == 0) { Form = new EditModel { PublishedAt = DateTime.Now }; if (Enum.TryParse<ContentType>(RequestedType, true, out var type)) Form.Type = type; return; } var item = await db.ContentItems.AsNoTracking().SingleOrDefaultAsync(x => x.Id == Id); if (item is null) { Error = "المحتوى غير موجود."; return; } Form = new EditModel { Title=item.Title, Slug=item.Slug, Summary=item.Summary, Content=item.Content, CategoryId=item.CategoryId, Type=item.Type, PublishedAt=item.PublishedAt?.LocalDateTime, IsPublished=item.IsPublished, Featured=item.Featured, SortOrder=item.SortOrder, MainImage=item.MainImage, AudioPath=item.AudioPath, DocumentPath=item.DocumentPath }; }
-    private async Task SaveAsync() { Saving = true; Error = null; try { await using var scope = ScopeFactory.CreateAsyncScope(); var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>(); if (!await db.Categories.AnyAsync(x => x.Id == Form.CategoryId)) { Error = "اختر تصنيفاً صحيحاً."; return; } var item = Id == 0 ? new ContentItem { CreatedAt=DateTimeOffset.UtcNow } : await db.ContentItems.FindAsync(Id); if (item is null) { Error="المحتوى غير موجود."; return; } item.Title=Form.Title.Trim(); item.Slug=await UniqueSlugAsync(db, Form.Slug, Form.Title, Id); item.Summary=string.IsNullOrWhiteSpace(Form.Summary)?null:Sanitizer.Sanitize(Form.Summary.Trim()); item.Content=Sanitizer.Sanitize(Form.Content); item.CategoryId=Form.CategoryId; item.Type=Form.Type; item.PublishedAt=Form.PublishedAt is null?null:new DateTimeOffset(Form.PublishedAt.Value.ToUniversalTime()); item.IsPublished=Form.IsPublished; item.Featured=Form.Featured; item.SortOrder=Form.SortOrder; item.MainImage=Normalize(Form.MainImage); item.AudioPath=Normalize(Form.AudioPath); item.DocumentPath=Normalize(Form.DocumentPath); item.UpdatedAt=DateTimeOffset.UtcNow; if(Id==0) db.ContentItems.Add(item); await db.SaveChangesAsync(); Navigation.NavigateTo("/admin/contents", true); } finally { Saving=false; } }
-    private static async Task<string> UniqueSlugAsync(ApplicationDbContext db,string? requested,string title,int id){var basis=SlugGenerator.Generate(string.IsNullOrWhiteSpace(requested)?title:requested);var candidate=basis;var suffix=2;while(await db.ContentItems.AnyAsync(x=>x.Slug==candidate&&x.Id!=id))candidate=$"{basis}-{suffix++}";return candidate;}
-    private static string? Normalize(string? value){if(string.IsNullOrWhiteSpace(value))return null;var path=value.Trim();return path.StartsWith("/uploads/",StringComparison.OrdinalIgnoreCase)?path:null;}
-    private sealed class EditModel { [Required,MaxLength(300)] public string Title{get;set;}=string.Empty; [MaxLength(320)] public string? Slug{get;set;} [MaxLength(2000)] public string? Summary{get;set;} [Required] public string Content{get;set;}=string.Empty; [Range(1,int.MaxValue)] public int CategoryId{get;set;} public ContentType Type{get;set;}=ContentType.Article; public DateTime? PublishedAt{get;set;}=DateTime.Now; public bool IsPublished{get;set;} public bool Featured{get;set;} public int SortOrder{get;set;} public string? MainImage{get;set;} public string? AudioPath{get;set;} public string? DocumentPath{get;set;} }
+    [SupplyParameterFromQuery(Name = "type")] public string? RequestedType { get; set; }
+    private EditModel Form = new();
+    private List<Category> Categories = [];
+    private List<MediaItem> Media = [];
+    private IEnumerable<MediaItem> AudioItems => Media.Where(x => x.MimeType.StartsWith("audio/"));
+    private IBrowserFile? SelectedAudio;
+    private string? Error;
+    private string? AudioMessage;
+    private string? AudioError;
+    private bool Saving;
+    private bool UploadingAudio;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await using var scope = ScopeFactory.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Categories = await db.Categories.AsNoTracking().OrderBy(x => x.SortOrder).ToListAsync();
+        Media = await db.MediaItems.AsNoTracking().OrderByDescending(x => x.CreatedAt).Take(250).ToListAsync();
+        if (Id == 0)
+        {
+            Form = new EditModel { PublishedAt = DateTime.Now };
+            if (Enum.TryParse<ContentType>(RequestedType, true, out var type)) Form.Type = type;
+            return;
+        }
+        var item = await db.ContentItems.AsNoTracking().SingleOrDefaultAsync(x => x.Id == Id);
+        if (item is null) { Error = "المحتوى غير موجود."; return; }
+        var youtubeId = YouTubeEmbed.FindVideoId(item.Content);
+        Form = new EditModel
+        {
+            Title = item.Title, Slug = item.Slug, Summary = item.Summary,
+            Content = youtubeId is null ? item.Content : YouTubeEmbed.RemoveVideoLinks(item.Content),
+            YouTubeUrl = youtubeId is null ? null : YouTubeEmbed.CanonicalUrl(youtubeId),
+            CategoryId = item.CategoryId, Type = item.Type, PublishedAt = item.PublishedAt?.LocalDateTime,
+            IsPublished = item.IsPublished, Featured = item.Featured, SortOrder = item.SortOrder,
+            MainImage = item.MainImage, AudioPath = item.AudioPath, DocumentPath = item.DocumentPath
+        };
+    }
+
+    private void SelectAudio(InputFileChangeEventArgs e) { SelectedAudio = e.File; AudioMessage = null; AudioError = null; }
+
+    private async Task UploadAudioAsync()
+    {
+        if (SelectedAudio is null) return;
+        UploadingAudio = true; AudioMessage = null; AudioError = null;
+        try
+        {
+            var extension = Path.GetExtension(SelectedAudio.Name);
+            if (!new[] { ".mp3", ".ogg", ".wav" }.Contains(extension, StringComparer.OrdinalIgnoreCase))
+                throw new InvalidOperationException("اختاري ملفاً صوتياً بصيغة MP3 أو OGG أو WAV.");
+            await using var input = SelectedAudio.OpenReadStream(MaximumAudioSize);
+            var item = await Storage.SaveAsync(input, SelectedAudio.Name, SelectedAudio.Size, null, CancellationToken.None);
+            await using var scope = ScopeFactory.CreateAsyncScope();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            db.MediaItems.Add(item); await db.SaveChangesAsync();
+            Media.Insert(0, item); Form.AudioPath = item.Path;
+            AudioMessage = "تم رفع التسجيل واختياره لهذا المحتوى. اضغطي حفظ المحتوى لإتمام التعديل.";
+            SelectedAudio = null;
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or IOException) { AudioError = ex.Message; }
+        finally { UploadingAudio = false; }
+    }
+
+    private async Task SaveAsync()
+    {
+        Saving = true; Error = null;
+        try
+        {
+            var articleContent = YouTubeEmbed.RemoveVideoLinks(Form.Content);
+            if (!string.IsNullOrWhiteSpace(Form.YouTubeUrl))
+            {
+                var videoId = YouTubeEmbed.FindVideoId(Form.YouTubeUrl);
+                if (videoId is null) { Error = "رابط يوتيوب غير صحيح. ألصقي رابط الفيديو الكامل ثم حاولي مرة أخرى."; return; }
+                articleContent = YouTubeEmbed.AppendVideoLink(articleContent, videoId);
+            }
+            await using var scope = ScopeFactory.CreateAsyncScope();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            if (!await db.Categories.AnyAsync(x => x.Id == Form.CategoryId)) { Error = "اختر تصنيفاً صحيحاً."; return; }
+            var item = Id == 0 ? new ContentItem { CreatedAt = DateTimeOffset.UtcNow } : await db.ContentItems.FindAsync(Id);
+            if (item is null) { Error = "المحتوى غير موجود."; return; }
+            item.Title = Form.Title.Trim(); item.Slug = await UniqueSlugAsync(db, Form.Slug, Form.Title, Id);
+            item.Summary = string.IsNullOrWhiteSpace(Form.Summary) ? null : Sanitizer.Sanitize(Form.Summary.Trim());
+            item.Content = Sanitizer.Sanitize(articleContent); item.CategoryId = Form.CategoryId; item.Type = Form.Type;
+            item.PublishedAt = Form.PublishedAt is null ? null : new DateTimeOffset(Form.PublishedAt.Value.ToUniversalTime());
+            item.IsPublished = Form.IsPublished; item.Featured = Form.Featured; item.SortOrder = Form.SortOrder;
+            item.MainImage = Normalize(Form.MainImage); item.AudioPath = Normalize(Form.AudioPath); item.DocumentPath = Normalize(Form.DocumentPath);
+            item.UpdatedAt = DateTimeOffset.UtcNow; if (Id == 0) db.ContentItems.Add(item);
+            await db.SaveChangesAsync(); Navigation.NavigateTo("/admin/contents", true);
+        }
+        finally { Saving = false; }
+    }
+
+    private static async Task<string> UniqueSlugAsync(ApplicationDbContext db, string? requested, string title, int id)
+    { var basis = SlugGenerator.Generate(string.IsNullOrWhiteSpace(requested) ? title : requested); var candidate = basis; var suffix = 2; while (await db.ContentItems.AnyAsync(x => x.Slug == candidate && x.Id != id)) candidate = $"{basis}-{suffix++}"; return candidate; }
+    private static string? Normalize(string? value) { if (string.IsNullOrWhiteSpace(value)) return null; var path = value.Trim(); return path.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase) ? path : null; }
+
+    private sealed class EditModel
+    {
+        [Required, MaxLength(300)] public string Title { get; set; } = string.Empty;
+        [MaxLength(320)] public string? Slug { get; set; }
+        [MaxLength(2000)] public string? Summary { get; set; }
+        [Required] public string Content { get; set; } = string.Empty;
+        public string? YouTubeUrl { get; set; }
+        [Range(1, int.MaxValue)] public int CategoryId { get; set; }
+        public ContentType Type { get; set; } = ContentType.Article;
+        public DateTime? PublishedAt { get; set; } = DateTime.Now;
+        public bool IsPublished { get; set; }
+        public bool Featured { get; set; }
+        public int SortOrder { get; set; }
+        public string? MainImage { get; set; }
+        public string? AudioPath { get; set; }
+        public string? DocumentPath { get; set; }
+    }
 }

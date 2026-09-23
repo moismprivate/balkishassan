@@ -4,7 +4,7 @@
 @rendermode InteractiveServer
 @inject IServiceScopeFactory ScopeFactory
 <PageTitle>المحتويات — إدارة الموقع</PageTitle><HeadContent><meta name="robots" content="noindex,nofollow" /></HeadContent>
-<header class="admin-heading"><div><span>الأرشيف</span><h1>المحتويات</h1></div><a class="primary-button" href="/admin/content/new">محتوى جديد +</a></header>
+<header class="admin-heading"><div><span>الأرشيف</span><h1>المحتويات</h1></div><a class="primary-button" href="/admin/content/new" data-enhance-nav="false">محتوى جديد +</a></header>
 <form class="admin-search" method="get"><input type="search" name="q" value="@Query" placeholder="ابحثي بالعنوان" /><button>بحث</button></form>
 <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>العنوان</th><th>التصنيف</th><th>الحالة</th><th>آخر تعديل</th><th></th></tr></thead><tbody>@foreach (var item in Items) { <tr><td><strong>@item.Title</strong><small>@item.Type</small></td><td>@item.Category.Name</td><td><span class="status @(item.IsPublished ? "published" : "draft")">@(item.IsPublished ? "منشور" : "مسودة")</span></td><td>@item.UpdatedAt.LocalDateTime.ToString("d MMM yyyy")</td><td class="actions"><a href="/admin/content/@item.Id">تعديل</a><a class="danger-link" href="/admin/content/@item.Id/delete">حذف</a></td></tr> }</tbody></table></div>
 @if (TotalPages > 1) { <nav class="pagination"><a href="/admin/contents?q=@Uri.EscapeDataString(Query)&page=@(Page - 1)" class="@(Page <= 1 ? "disabled" : "")">السابق</a><span>@Page / @TotalPages</span><a href="/admin/contents?q=@Uri.EscapeDataString(Query)&page=@(Page + 1)" class="@(Page >= TotalPages ? "disabled" : "")">التالي</a></nav> }

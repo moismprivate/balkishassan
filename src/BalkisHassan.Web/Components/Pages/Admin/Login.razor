@@ -9,5 +9,7 @@
 @if (Error == 1) { <div class="validation">البريد الإلكتروني أو كلمة المرور غير صحيحة.</div> }
 <label for="email">البريد الإلكتروني</label><input id="email" name="email" type="email" dir="ltr" autocomplete="username" required />
 <label for="password">كلمة المرور</label><input id="password" name="password" type="password" dir="ltr" autocomplete="current-password" required />
-<label class="check"><input name="rememberMe" type="checkbox" value="true" /> تذكرني</label><button class="primary-button" type="submit">دخول</button></form></section>
+<label class="check" for="remember-me"><input id="remember-me" name="rememberMe" type="checkbox" value="true" /> تذكرني</label>
+<small class="remember-help">يبقيكِ مسجلة الدخول لمدة 30 يوماً على هذا الجهاز.</small>
+<button class="primary-button" type="submit">دخول</button></form></section>
 @code { [SupplyParameterFromQuery] public int Error { get; set; } [SupplyParameterFromQuery] public string? ReturnUrl { get; set; } }

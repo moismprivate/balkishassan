@@ -3,7 +3,11 @@ extern alias WebProject;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using WebProgram = WebProject::Program;
 
 namespace BalkisHassan.Tests;
@@ -13,6 +17,16 @@ public sealed class WebIntegrationTests : IClassFixture<WebApplicationFactory<We
     private readonly WebApplicationFactory<WebProgram> _factory;
 
     public WebIntegrationTests(WebApplicationFactory<WebProgram> factory) => _factory = factory;
+
+    [Fact]
+    public void RememberMeCookie_BlijftDertigDagenGeldig()
+    {
+        var options = _factory.Services.GetRequiredService<IOptionsMonitor<CookieAuthenticationOptions>>()
+            .Get(IdentityConstants.ApplicationScheme);
+
+        Assert.Equal(TimeSpan.FromDays(30), options.ExpireTimeSpan);
+        Assert.True(options.SlidingExpiration);
+    }
 
     [Fact]
     public async Task Admin_VereistAuthenticatie()

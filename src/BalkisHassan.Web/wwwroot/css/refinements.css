@@ -239,6 +239,29 @@
   font: 400 11px / 1.6 var(--sans);
 }
 
+.content-media-tools { margin-top: 34px; padding-top: 28px; border-top: 1px solid var(--line); }
+.media-tools-heading > span { color: var(--wine); font-size: 12px; }
+.media-tools-heading h2 { margin: 2px 0 4px; font: 600 28px/1.45 var(--serif); }
+.media-tools-heading > p { margin: 0 0 20px; color: var(--muted); font-size: 14px; }
+.content-media-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.content-media-card { min-width: 0; padding: 20px; border: 1px solid #ded5ca; background: #faf8f5; }
+.media-field-heading { display: flex; align-items: flex-start; gap: 12px; min-height: 68px; }
+.media-field-icon { display: grid; width: 38px; height: 38px; flex: 0 0 38px; place-items: center; border-radius: 50%; background: var(--wine); color: #fff; font-size: 14px; }
+.media-field-heading h3 { margin: 0; font: 600 20px/1.45 var(--serif); }
+.media-field-heading p { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
+.field-help { display: block; margin-top: 5px; color: var(--muted); font-size: 11px; line-height: 1.6; }
+.field-success, .field-error, .selected-file { margin: 11px 0 0; font-size: 12px; line-height: 1.6; }
+.field-success { color: #356137; }
+.field-error { color: #a52a34; }
+.media-preview-link { margin-top: 10px; }
+.admin-audio-preview { margin-top: 13px; padding: 12px; border: 1px solid #ded5ca; background: #fff; }
+.admin-audio-preview span { display: block; margin-bottom: 7px; color: var(--muted); font-size: 11px; }
+.admin-audio-preview audio { width: 100%; }
+.audio-upload-box { margin-top: 15px; padding-top: 5px; border-top: 1px solid #e7e0d8; }
+.audio-upload-box input[type="file"] { padding: 8px; background: #fff; font-size: 12px; }
+.audio-upload-box .secondary-button { margin-top: 10px; }
+.login-panel .remember-help { display: block; margin: -2px 26px 0 0; color: var(--muted); font-size: 11px; }
+
 @media (max-width: 780px) {
   .brand-photo {
     width: 46px;
@@ -273,6 +296,7 @@
   .rich-text-editor .editor-toolbar { position: static; }
   .rich-text-editor .rich-editor,
   .rich-text-editor .editor-source { min-height: 400px; }
+  .content-media-grid { grid-template-columns: 1fr; }
 }
 
 @media print {

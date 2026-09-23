@@ -34,6 +34,7 @@ public static class ServiceCollectionExtensions
             options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.SameAsRequest;
             options.LoginPath = "/admin/login";
             options.AccessDeniedPath = "/admin/login";
+            options.ExpireTimeSpan = TimeSpan.FromDays(30);
             options.SlidingExpiration = true;
         });
 
