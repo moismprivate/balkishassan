@@ -5,12 +5,17 @@
 @inject IServiceScopeFactory ScopeFactory
 <PageTitle>المحتويات — إدارة الموقع</PageTitle><HeadContent><meta name="robots" content="noindex,nofollow" /></HeadContent>
 <header class="admin-heading"><div><span>الأرشيف</span><h1>المحتويات</h1></div><a class="primary-button" href="/admin/content/new" data-enhance-nav="false">محتوى جديد +</a></header>
+@if (SavedId is > 0)
+{
+    <div class="admin-save-success" role="status">تم حفظ المحتوى بنجاح. <a href="/admin/content/@SavedId" data-enhance-nav="false">افتحي المحتوى المحفوظ</a></div>
+}
 <form class="admin-search" method="get"><input type="search" name="q" value="@Query" placeholder="ابحثي بالعنوان" /><button>بحث</button></form>
 <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>العنوان</th><th>التصنيف</th><th>الحالة</th><th>آخر تعديل</th><th></th></tr></thead><tbody>@foreach (var item in Items) { <tr><td><strong>@item.Title</strong><small>@item.Type</small></td><td>@item.Category.Name</td><td><span class="status @(item.IsPublished ? "published" : "draft")">@(item.IsPublished ? "منشور" : "مسودة")</span></td><td>@item.UpdatedAt.LocalDateTime.ToString("d MMM yyyy")</td><td class="actions"><a href="/admin/content/@item.Id">تعديل</a><a class="danger-link" href="/admin/content/@item.Id/delete">حذف</a></td></tr> }</tbody></table></div>
 @if (TotalPages > 1) { <nav class="pagination"><a href="/admin/contents?q=@Uri.EscapeDataString(Query)&page=@(Page - 1)" class="@(Page <= 1 ? "disabled" : "")">السابق</a><span>@Page / @TotalPages</span><a href="/admin/contents?q=@Uri.EscapeDataString(Query)&page=@(Page + 1)" class="@(Page >= TotalPages ? "disabled" : "")">التالي</a></nav> }
 @code {
     [SupplyParameterFromQuery(Name="q")] public string? Q { get; set; }
     [SupplyParameterFromQuery(Name="page")] public int Page { get; set; } = 1;
+    [SupplyParameterFromQuery(Name="saved")] public int? SavedId { get; set; }
     private string Query = string.Empty; private int TotalPages = 1; private List<ContentItem> Items = [];
     protected override async Task OnParametersSetAsync() { const int size = 25; Page = Math.Max(1, Page); Query = Q?.Trim() ?? string.Empty; await using var scope = ScopeFactory.CreateAsyncScope(); var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>(); var query = db.ContentItems.AsNoTracking().Include(x => x.Category).AsQueryable(); if (!string.IsNullOrWhiteSpace(Query)) query = query.Where(x => EF.Functions.ILike(x.Title, $"%{Query}%")); var count = await query.CountAsync(); TotalPages = Math.Max(1, (int)Math.Ceiling(count/(double)size)); Page = Math.Min(Page, TotalPages); Items = await query.OrderByDescending(x => x.UpdatedAt).Skip((Page-1)*size).Take(size).ToListAsync(); }
 }

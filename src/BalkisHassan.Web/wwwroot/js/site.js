@@ -84,3 +84,11 @@ const initializeAudioPlayers = () => document.querySelectorAll('[data-audio-play
 initializeAudioPlayers();
 document.addEventListener('DOMContentLoaded', initializeAudioPlayers);
 window.Blazor?.addEventListener('enhancedload', initializeAudioPlayers);
+
+const showAdminFormErrors = () => {
+  document.getElementById('content-validation-summary')?.scrollIntoView({ block: 'start' });
+};
+
+showAdminFormErrors();
+document.addEventListener('DOMContentLoaded', showAdminFormErrors);
+window.Blazor?.addEventListener('enhancedload', showAdminFormErrors);

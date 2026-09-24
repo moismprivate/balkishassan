@@ -3,11 +3,13 @@
 @layout AdminLayout
 @attribute [Authorize]
 @rendermode InteractiveServer
+@implements IDisposable
 @inject IServiceScopeFactory ScopeFactory
 @inject ContentSanitizer Sanitizer
 @inject MediaStorageService Storage
 @inject NavigationManager Navigation
 @inject ILogger<EditContent> Logger
+@inject PersistentComponentState PersistentState
 
 <PageTitle>@(Id == 0 ? "محتوى جديد" : "تعديل المحتوى") — إدارة الموقع</PageTitle>
 <HeadContent><meta name="robots" content="noindex,nofollow" /></HeadContent>
@@ -28,10 +30,17 @@
         <input type="hidden" name="_handler" value="content-edit" />
     }
     <DataAnnotationsValidator />
+    @if (ShowValidationHint && FormContext.GetValidationMessages().Any())
+    {
+        <div class="admin-validation-summary admin-validation-summary-top" role="alert" id="content-validation-summary">
+            <strong>لم يُحفظ المحتوى. صححي الحقول التالية ثم اضغطي حفظ المحتوى مرة أخرى:</strong>
+            <ul>@foreach (var message in FormContext.GetValidationMessages().Distinct()) { <li>@message</li> }</ul>
+        </div>
+    }
     <div class="form-layout">
         <div class="form-main">
             <label for="title">العنوان <span class="required-mark" aria-label="مطلوب">*</span></label>
-            <InputText id="title" @bind-Value="Form.Title" class="title-input" />
+            <InputText id="title" @bind-Value="Form.Title" class="title-input" required />
             <ValidationMessage For="@(() => Form.Title)" />
             <label for="summary">المقدمة القصيرة</label>
             <InputTextArea id="summary" @bind-Value="Form.Summary" rows="3" />
@@ -122,15 +131,8 @@
             <label class="check"><InputCheckbox @bind-Value="Form.IsPublished" /> منشور</label>
             <label class="check"><InputCheckbox @bind-Value="Form.Featured" /> مميز في الرئيسية</label>
             <label for="sort">ترتيب يدوي</label><InputNumber id="sort" @bind-Value="Form.SortOrder" />
-            @if (ShowValidationHint && FormContext.GetValidationMessages().Any())
-            {
-                <div class="admin-validation-summary" role="alert">
-                    <strong>راجعي الحقول التالية:</strong>
-                    <ul>@foreach (var message in FormContext.GetValidationMessages().Distinct()) { <li>@message</li> }</ul>
-                </div>
-            }
             @if (!string.IsNullOrWhiteSpace(Error)) { <div class="admin-validation-summary" role="alert">@Error</div> }
-            <button class="primary-button" type="button" onclick="this.closest('form').submit()">حفظ المحتوى</button>
+            <button class="primary-button" type="button" onclick="const form=this.form;const category=form.querySelector('#category');category.setCustomValidity(category.value==='0'?'اختاري التصنيف أولاً.':'');if(form.reportValidity())form.submit()">حفظ المحتوى</button>
         </div></aside>
     </div>
 </EditForm>
@@ -155,6 +157,23 @@
     private bool ShowValidationHint;
     private int? LoadedId;
     private string? LoadedType;
+    private PersistingComponentStateSubscription PersistenceSubscription;
+
+    protected override void OnInitialized()
+    {
+        PersistenceSubscription = PersistentState.RegisterOnPersisting(() =>
+        {
+            if (PostedForm is not null && FormContext is not null)
+                PersistentState.PersistAsJson(StateKey, new PersistedFormState(Form, ShowValidationHint, Error));
+            return Task.CompletedTask;
+        });
+    }
+
+    private string StateKey => $"admin-content-form-{Id}";
+
+    public void Dispose() => PersistenceSubscription.Dispose();
+
+    private sealed record PersistedFormState(AdminContentFormModel Form, bool ShowValidationHint, string? Error);
 
     protected override async Task OnParametersSetAsync()
     {
@@ -172,6 +191,22 @@
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         Categories = await db.Categories.AsNoTracking().OrderBy(x => x.SortOrder).ToListAsync();
         Media = await db.MediaItems.AsNoTracking().OrderByDescending(x => x.CreatedAt).Take(250).ToListAsync();
+        if (PostedForm is null && PersistentState.TryTakeFromJson<PersistedFormState>(StateKey, out var restored) && restored is not null)
+        {
+            Form = restored.Form;
+            ShowValidationHint = restored.ShowValidationHint;
+            Error = restored.Error;
+            FormContext = new EditContext(Form);
+            if (ShowValidationHint)
+                FormContext.Validate();
+            if (!string.IsNullOrWhiteSpace(Form.AudioPath) && Media.All(x => x.Path != Form.AudioPath))
+            {
+                var attachedAudio = await db.MediaItems.AsNoTracking().SingleOrDefaultAsync(x => x.Path == Form.AudioPath);
+                if (attachedAudio is not null)
+                    Media.Add(attachedAudio);
+            }
+            return;
+        }
         if (PostedForm is not null)
         {
             Form = PostedForm;
@@ -241,7 +276,7 @@
     private async Task SaveAsync()
     {
         Error = null;
-        var saved = false;
+        var savedId = 0;
         try
         {
             var articleContent = YouTubeEmbed.RemoveVideoLinks(Form.Content ?? string.Empty);
@@ -266,15 +301,15 @@
             item.MainImage = Normalize(Form.MainImage); item.AudioPath = Normalize(Form.AudioPath); item.DocumentPath = Normalize(Form.DocumentPath);
             item.UpdatedAt = DateTimeOffset.UtcNow; if (Id == 0) db.ContentItems.Add(item);
             await db.SaveChangesAsync();
-            saved = true;
+            savedId = item.Id;
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Unable to save admin content {ContentId}", Id);
             Error = "تعذر حفظ المحتوى الآن. تحققي من اتصال الموقع وحاولي مرة أخرى.";
         }
-        if (saved)
-            Navigation.NavigateTo("/admin/contents", true);
+        if (savedId != 0)
+            Navigation.NavigateTo($"/admin/contents?saved={savedId}", true);
     }
 
     private static async Task<string> UniqueSlugAsync(ApplicationDbContext db, string? requested, string title, int id)

@@ -1,6 +1,7 @@
 @inherits InputBase<string?>
 @implements IAsyncDisposable
 @inject IJSRuntime JS
+@inject ILogger<RichTextEditor> Logger
 @using System.Diagnostics.CodeAnalysis
 
 <div class="rich-text-editor" @ref="_host">
@@ -23,7 +24,8 @@
         <button type="button" data-editor-command="redo" title="إعادة" aria-label="إعادة">↷</button>
         <button type="button" data-editor-action="source" class="editor-source-toggle" title="تحرير HTML">HTML</button>
     </div>
-    <div class="rich-editor @CssClass" contenteditable="true" role="textbox" aria-multiline="true" spellcheck="true" @attributes="AdditionalAttributes">@((MarkupString)(CurrentValue ?? string.Empty))</div>
+    @* JavaScript owns this subtree. Blazor must not diff nodes changed by contenteditable. *@
+    <div class="rich-editor @CssClass" contenteditable="true" role="textbox" aria-multiline="true" spellcheck="true" @attributes="AdditionalAttributes"></div>
     <textarea class="editor-source" name="@NameAttributeValue" dir="rtl" aria-label="مصدر HTML">@CurrentValue</textarea>
     <p class="editor-help">حددي النص ثم اختاري التنسيق. يمكنك أيضاً تعديل HTML عند الحاجة.</p>
 </div>
@@ -36,20 +38,30 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        try
         {
-            _module = await JS.InvokeAsync<IJSObjectReference>("import", Assets["js/rich-text-editor.js"]);
-            _self = DotNetObjectReference.Create(this);
-            _editorValue = CurrentValue ?? string.Empty;
-            await _module.InvokeVoidAsync("initialize", _host, _editorValue, _self);
-            return;
-        }
+            if (firstRender)
+            {
+                _module = await JS.InvokeAsync<IJSObjectReference>("import", "/" + Assets["js/rich-text-editor.js"]);
+                _self = DotNetObjectReference.Create(this);
+                _editorValue = CurrentValue ?? string.Empty;
+                await _module.InvokeVoidAsync("initialize", _host, _editorValue, _self);
+                return;
+            }
 
-        var currentValue = CurrentValue ?? string.Empty;
-        if (_module is not null && !string.Equals(currentValue, _editorValue, StringComparison.Ordinal))
+            var currentValue = CurrentValue ?? string.Empty;
+            if (_module is not null && !string.Equals(currentValue, _editorValue, StringComparison.Ordinal))
+            {
+                _editorValue = currentValue;
+                await _module.InvokeVoidAsync("setHtml", _host, currentValue);
+            }
+        }
+        catch (JSDisconnectedException)
         {
-            _editorValue = currentValue;
-            await _module.InvokeVoidAsync("setHtml", _host, currentValue);
+        }
+        catch (JSException ex)
+        {
+            Logger.LogError(ex, "The rich text editor could not initialize; the source textarea remains available.");
         }
     }
 
@@ -78,6 +90,9 @@
                 await _module.DisposeAsync();
             }
             catch (JSDisconnectedException)
+            {
+            }
+            catch (JSException)
             {
             }
         }
