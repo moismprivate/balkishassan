@@ -38,7 +38,7 @@
     {
         if (firstRender)
         {
-            _module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/rich-text-editor.js");
+            _module = await JS.InvokeAsync<IJSObjectReference>("import", Assets["js/rich-text-editor.js"]);
             _self = DotNetObjectReference.Create(this);
             _editorValue = CurrentValue ?? string.Empty;
             await _module.InvokeVoidAsync("initialize", _host, _editorValue, _self);
