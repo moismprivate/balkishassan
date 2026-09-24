@@ -21,4 +21,4 @@ jobs:
         shell: bash
         run: |
           ssh "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
-            "sudo journalctl -u balkis --since '1 hour ago' --no-pager -o cat | grep -E 'Unhandled exception|Exception:|Exception |^   at |^      at |fail: Microsoft.AspNetCore.Components.Server.Circuits|System\\.' | tail -n 120"
+            "journalctl -u balkis --since '1 hour ago' --no-pager -o cat 2>&1 | grep -E 'Unhandled exception|Exception:|Exception |^   at |^      at |fail: Microsoft.AspNetCore.Components.Server.Circuits|System\\.|insufficient permissions' | tail -n 120; sudo -n systemctl status balkis --no-pager -n 80 2>&1 | grep -E 'Exception|Error|Circuit|Active:|not allowed|password' | tail -n 80"
