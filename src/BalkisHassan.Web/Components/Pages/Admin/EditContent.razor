@@ -22,6 +22,11 @@
 {
 <EditForm EditContext="FormContext" OnValidSubmit="SaveAsync" OnInvalidSubmit="ShowInvalidFields"
           FormName="content-edit" method="post" Enhance="false" class="content-form">
+    @* Interactive rendering omits EditForm's SSR-only _handler; the native POST still needs it. *@
+    @if (RendererInfo.IsInteractive)
+    {
+        <input type="hidden" name="_handler" value="content-edit" />
+    }
     <DataAnnotationsValidator />
     <div class="form-layout">
         <div class="form-main">
