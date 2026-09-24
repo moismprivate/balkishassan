@@ -20,6 +20,21 @@ public static partial class YouTubeEmbed
 
     public static string CanonicalUrl(string videoId) => $"https://www.youtube.com/watch?v={videoId}";
 
+    public static string? ParseVideoIdFromUrl(string? value)
+    {
+        if (!Uri.TryCreate(value?.Trim(), UriKind.Absolute, out var uri) ||
+            uri.Scheme is not ("https" or "http"))
+            return null;
+
+        var host = uri.Host.ToLowerInvariant();
+        if (host is not ("youtube.com" or "www.youtube.com" or "m.youtube.com" or
+            "youtube-nocookie.com" or "www.youtube-nocookie.com" or "youtu.be" or "www.youtu.be"))
+            return null;
+
+        var id = FindVideoId(uri.AbsoluteUri);
+        return id is { Length: 11 } ? id : null;
+    }
+
     public static string AppendVideoLink(string html, string videoId)
     {
         var content = RemoveVideoLinks(html);
@@ -27,7 +42,7 @@ public static partial class YouTubeEmbed
         return $"{content}{separator}<p><a href=\"{CanonicalUrl(videoId)}\">مشاهدة الفيديو على يوتيوب</a></p>";
     }
 
-    [GeneratedRegex(@"(?:youtu\.be/|youtube(?:-nocookie)?\.com/(?:watch\?(?:[^\s""'<>]*&)?v=|embed/|v/))([A-Za-z0-9_-]{11})", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"(?:youtu\.be/|youtube(?:-nocookie)?\.com/(?:watch\?(?:[^\s""'<>]*&)?v=|embed/|v/|shorts/|live/))([A-Za-z0-9_-]{11})(?![A-Za-z0-9_-])", RegexOptions.IgnoreCase)]
     private static partial Regex YouTubeUrl();
 
     [GeneratedRegex(@"<a\b[^>]*href=[""'][^""']*(?:youtu\.be|youtube(?:-nocookie)?\.com)[^""']*[""'][^>]*>.*?</a>", RegexOptions.IgnoreCase | RegexOptions.Singleline)]

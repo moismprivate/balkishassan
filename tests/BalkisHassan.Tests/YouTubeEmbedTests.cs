@@ -27,4 +27,14 @@ public sealed class YouTubeEmbedTests
         Assert.Equal(1, result.Split("youtube.com/watch", StringSplitOptions.None).Length - 1);
         Assert.Contains("https://www.youtube.com/watch?v=pvKosp0S4tc", result);
     }
+
+    [Theory]
+    [InlineData("https://www.youtube.com/shorts/pvKosp0S4tc", "pvKosp0S4tc")]
+    [InlineData("https://m.youtube.com/watch?v=pvKosp0S4tc", "pvKosp0S4tc")]
+    [InlineData("https://example.com/youtube.com/watch?v=pvKosp0S4tc", null)]
+    [InlineData("https://youtu.be/pvKosp0S4tcMORE", null)]
+    public void ParseVideoIdFromUrl_AccepteertAlleenEchteYoutubeLinks(string url, string? expected)
+    {
+        Assert.Equal(expected, YouTubeEmbed.ParseVideoIdFromUrl(url));
+    }
 }

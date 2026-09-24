@@ -15,6 +15,11 @@
 </head>
 <body>
     <Routes />
+    <div id="components-reconnect-modal" role="alert" aria-live="assertive">
+        <strong>انقطع الاتصال بالموقع.</strong>
+        <p>قد لا تُحفظ التعديلات الآن. انسخي النص غير المحفوظ قبل إعادة تحميل الصفحة.</p>
+        <button type="button" onclick="location.reload()">إعادة تحميل الصفحة</button>
+    </div>
     <script src="@Assets["_framework/blazor.web.js"]"></script>
     <script src="@Assets["js/site.js"]"></script>
 </body>

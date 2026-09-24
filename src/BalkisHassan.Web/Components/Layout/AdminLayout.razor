@@ -1,7 +1,7 @@
 @inherits LayoutComponentBase
 <div class="admin-body">
 <AuthorizeView>
-<Authorized><header class="admin-topbar"><a href="/admin" class="admin-brand">إدارة موقع بلقيس</a><nav><a href="/" target="_blank">عرض الموقع ↗</a><form method="post" action="/admin/logout"><AntiforgeryToken /><button type="submit">تسجيل الخروج</button></form></nav></header><div class="admin-shell"><aside class="admin-sidebar"><a href="/admin">لوحة التحكم</a><a href="/admin/content/new">مقال جديد</a><a href="/admin/content/new?type=Poem">قصيدة جديدة</a><a href="/admin/contents">المحتويات</a><a href="/admin/categories">التصنيفات</a><a href="/admin/media">الوسائط</a></aside><main class="admin-main">@Body</main></div></Authorized>
+<Authorized><header class="admin-topbar"><a href="/admin" class="admin-brand">إدارة موقع بلقيس</a><nav><a href="/" target="_blank">عرض الموقع ↗</a><form method="post" action="/admin/logout"><AntiforgeryToken /><button type="submit">تسجيل الخروج</button></form></nav></header><div class="admin-shell"><aside class="admin-sidebar"><a href="/admin">لوحة التحكم</a><a href="/admin/content/new" data-enhance-nav="false">مقال جديد</a><a href="/admin/content/new?type=Poem" data-enhance-nav="false">قصيدة جديدة</a><a href="/admin/contents">المحتويات</a><a href="/admin/categories">التصنيفات</a><a href="/admin/media">الوسائط</a></aside><main class="admin-main">@Body</main></div></Authorized>
 <NotAuthorized><main class="admin-login-main">@Body</main></NotAuthorized>
 </AuthorizeView>
 </div>
