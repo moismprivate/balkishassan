@@ -197,6 +197,7 @@
   box-shadow: 0 0 0 2px rgba(138, 62, 70, .1);
 }
 .rich-text-editor .rich-editor {
+  display: none;
   min-height: 520px;
   overflow-wrap: anywhere;
   white-space: normal;
@@ -220,7 +221,7 @@
   color: var(--wine-dark);
 }
 .rich-text-editor .editor-source {
-  display: none;
+  display: block;
   min-height: 520px;
   padding: 18px;
   border: 1px solid #d5ccc1;
@@ -231,8 +232,12 @@
   font: 14px / 1.7 Consolas, monospace;
   resize: vertical;
 }
-.rich-text-editor.is-source-mode .rich-editor { display: none; }
-.rich-text-editor.is-source-mode .editor-source { display: block; }
+.rich-text-editor.is-initialized .rich-editor { display: block; }
+.rich-text-editor.is-initialized .editor-source { display: none; }
+.rich-text-editor.is-initialized.is-source-mode .rich-editor { display: none; }
+.rich-text-editor.is-initialized.is-source-mode .editor-source { display: block; }
+.rich-text-editor:not(.is-initialized) .editor-toolbar { display: none; }
+.rich-text-editor:not(.is-initialized) .editor-source { background: #fff; color: var(--ink); font: 20px/2 var(--serif); direction: rtl; text-align: right; }
 .rich-text-editor .editor-help {
   margin: 7px 2px 0;
   color: var(--muted);

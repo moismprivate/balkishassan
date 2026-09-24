@@ -20,8 +20,8 @@
 
 @if (FormContext is not null)
 {
-<CascadingValue Value="FormContext">
-<div class="content-form">
+<EditForm EditContext="FormContext" OnValidSubmit="SaveAsync" OnInvalidSubmit="ShowInvalidFields"
+          FormName="content-edit" method="post" Enhance="false" class="content-form">
     <DataAnnotationsValidator />
     <div class="form-layout">
         <div class="form-main">
@@ -125,17 +125,18 @@
                 </div>
             }
             @if (!string.IsNullOrWhiteSpace(Error)) { <div class="admin-validation-summary" role="alert">@Error</div> }
-            <button class="primary-button" type="button" @onclick="SaveValidatedAsync" disabled="@Saving">@(Saving ? "جارٍ الحفظ…" : "حفظ المحتوى")</button>
+            <button class="primary-button" type="button" onclick="this.closest('form').submit()">حفظ المحتوى</button>
         </div></aside>
     </div>
-</div>
-</CascadingValue>
+</EditForm>
 }
 
 @code {
     private const long MaximumAudioSize = 25 * 1024 * 1024;
     [Parameter] public int Id { get; set; }
     [SupplyParameterFromQuery(Name = "type")] public string? RequestedType { get; set; }
+    [SupplyParameterFromForm(Name = "Form", FormName = "content-edit")]
+    private AdminContentFormModel? PostedForm { get; set; }
     private AdminContentFormModel Form = new();
     private EditContext? FormContext;
     private List<Category> Categories = [];
@@ -145,7 +146,6 @@
     private string? Error;
     private string? AudioMessage;
     private string? AudioError;
-    private bool Saving;
     private bool UploadingAudio;
     private bool ShowValidationHint;
     private int? LoadedId;
@@ -153,7 +153,7 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        if (FormContext is not null && LoadedId == Id && LoadedType == RequestedType)
+        if (FormContext is not null && LoadedId == Id && LoadedType == RequestedType && PostedForm is null)
             return;
 
         LoadedId = Id;
@@ -167,6 +167,18 @@
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         Categories = await db.Categories.AsNoTracking().OrderBy(x => x.SortOrder).ToListAsync();
         Media = await db.MediaItems.AsNoTracking().OrderByDescending(x => x.CreatedAt).Take(250).ToListAsync();
+        if (PostedForm is not null)
+        {
+            Form = PostedForm;
+            FormContext = new EditContext(Form);
+            if (!string.IsNullOrWhiteSpace(Form.AudioPath) && Media.All(x => x.Path != Form.AudioPath))
+            {
+                var attachedAudio = await db.MediaItems.AsNoTracking().SingleOrDefaultAsync(x => x.Path == Form.AudioPath);
+                if (attachedAudio is not null)
+                    Media.Add(attachedAudio);
+            }
+            return;
+        }
         if (Id == 0)
         {
             Form = new AdminContentFormModel { PublishedAt = DateTime.Now };
@@ -219,22 +231,11 @@
         finally { UploadingAudio = false; }
     }
 
-    private async Task SaveValidatedAsync()
-    {
-        Error = null;
-        if (FormContext is null)
-            return;
-
-        ShowValidationHint = !FormContext.Validate();
-        if (ShowValidationHint)
-            return;
-
-        await SaveAsync();
-    }
+    private void ShowInvalidFields(EditContext _) => ShowValidationHint = true;
 
     private async Task SaveAsync()
     {
-        Saving = true; Error = null;
+        Error = null;
         var saved = false;
         try
         {
@@ -267,8 +268,6 @@
             Logger.LogError(ex, "Unable to save admin content {ContentId}", Id);
             Error = "تعذر حفظ المحتوى الآن. تحققي من اتصال الموقع وحاولي مرة أخرى.";
         }
-        finally { Saving = false; }
-
         if (saved)
             Navigation.NavigateTo("/admin/contents", true);
     }

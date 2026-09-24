@@ -24,7 +24,7 @@
         <button type="button" data-editor-action="source" class="editor-source-toggle" title="تحرير HTML">HTML</button>
     </div>
     <div class="rich-editor @CssClass" contenteditable="true" role="textbox" aria-multiline="true" spellcheck="true" @attributes="AdditionalAttributes">@((MarkupString)(CurrentValue ?? string.Empty))</div>
-    <textarea class="editor-source" dir="rtl" aria-label="مصدر HTML">@CurrentValue</textarea>
+    <textarea class="editor-source" name="@NameAttributeValue" dir="rtl" aria-label="مصدر HTML">@CurrentValue</textarea>
     <p class="editor-help">حددي النص ثم اختاري التنسيق. يمكنك أيضاً تعديل HTML عند الحاجة.</p>
 </div>
 

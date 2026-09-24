@@ -40,7 +40,10 @@ export function initialize(host, initialHtml, dotNetReference) {
   const options = { signal: controller.signal };
 
   const sourceMode = () => host.classList.contains('is-source-mode');
-  const sync = () => safeSync(dotNetReference, sourceMode() ? source.value : editor.innerHTML);
+  const sync = () => {
+    if (!sourceMode()) source.value = editor.innerHTML;
+    safeSync(dotNetReference, source.value);
+  };
   const execute = (command, value = null) => {
     editor.focus();
     document.execCommand(command, false, value);
@@ -98,6 +101,7 @@ export function initialize(host, initialHtml, dotNetReference) {
   }, options);
 
   host.__balkisEditorController = controller;
+  host.classList.add('is-initialized');
 }
 
 export function dispose(host) {
